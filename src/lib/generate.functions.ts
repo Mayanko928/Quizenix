@@ -35,7 +35,20 @@ const JSON_SCHEMA = `{
   ]
 }`;
 
+function computeCounts(notes: string) {
+  const chars = notes.length;
+  // Scale with note length: ~1 flashcard per 300 chars, clamped 6..60
+  const flashcards = Math.max(6, Math.min(60, Math.round(chars / 300)));
+  // ~1 quiz question per 700 chars, clamped 3..25
+  const quizTarget = Math.max(3, Math.min(25, Math.round(chars / 700)));
+  const easy = Math.max(1, Math.round(quizTarget * 0.4));
+  const hard = Math.max(1, Math.round(quizTarget * 0.2));
+  const medium = Math.max(1, quizTarget - easy - hard);
+  return { flashcards, quiz: easy + medium + hard, easy, medium, hard };
+}
+
 function buildUserPrompt(notes: string) {
+  const { flashcards, quiz, easy, medium, hard } = computeCounts(notes);
   return `Generate study material from the following notes.
 
 NOTES:
@@ -44,11 +57,11 @@ ${notes}
 """
 
 Requirements:
-1. Generate exactly 10 flashcards. Each flashcard has a clear, specific "question" and a concise, accurate "answer" (1-3 sentences). Cover the most important concepts in the notes, avoid duplication, and order them from foundational to advanced.
-2. Generate exactly 5 multiple-choice quiz questions based on the same notes, distributed across difficulty levels:
-   - 2 "easy" questions (direct recall of facts stated in the notes)
-   - 2 "medium" questions (require connecting two ideas from the notes)
-   - 1 "hard" question (requires applying or inferring beyond what's explicitly stated)
+1. Generate exactly ${flashcards} flashcards. Each has a clear, specific "question" and a concise, accurate "answer" (1-3 sentences). Cover every major concept, sub-topic, definition, and example in the notes — scale breadth to the material. Avoid duplication and order them from foundational to advanced.
+2. Generate exactly ${quiz} multiple-choice quiz questions based on the same notes, distributed across difficulty levels:
+   - ${easy} "easy" questions (direct recall of facts stated in the notes)
+   - ${medium} "medium" questions (require connecting two ideas from the notes)
+   - ${hard} "hard" questions (require applying or inferring beyond what's explicitly stated)
 
    Each quiz question must have exactly 4 options, exactly one of which is correct. Options must be plausible and similar in length/style (no obviously wrong "joke" answers). Include a one-sentence explanation for why the correct answer is right.
 3. Base everything strictly on the provided notes. Do not introduce facts that aren't in the notes or reasonably inferable from them.
