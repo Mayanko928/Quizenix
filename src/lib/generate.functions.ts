@@ -3,7 +3,7 @@ import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
-const Input = z.object({ notes: z.string().min(1).max(20000) });
+const Input = z.object({ notes: z.string().min(1).max(200000) });
 
 export type StudyMaterial = {
   flashcards: { id: number; question: string; answer: string }[];
