@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { dummyFlashcards } from "../lib/dummy-data";
+import { loadStudyMaterial } from "../lib/study-store";
 
 export const Route = createFileRoute("/flashcards")({
   head: () => ({
@@ -16,7 +17,13 @@ export const Route = createFileRoute("/flashcards")({
 });
 
 function FlashcardsPage() {
-  const cards = dummyFlashcards;
+  const [cards, setCards] = useState(dummyFlashcards);
+  useEffect(() => {
+    const m = loadStudyMaterial();
+    if (m?.flashcards?.length) {
+      setCards(m.flashcards.map((f) => ({ front: f.question, back: f.answer })));
+    }
+  }, []);
   const [idx, setIdx] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const card = cards[idx];
