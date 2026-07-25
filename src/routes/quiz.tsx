@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Check, X, Trophy, RotateCcw } from "lucide-react";
-import { dummyQuiz } from "../lib/dummy-data";
+import { dummyQuiz, type QuizQuestion } from "../lib/dummy-data";
+import { loadStudyMaterial } from "../lib/study-store";
 
 export const Route = createFileRoute("/quiz")({
   head: () => ({
@@ -16,7 +17,19 @@ export const Route = createFileRoute("/quiz")({
 });
 
 function QuizPage() {
-  const questions = dummyQuiz;
+  const [questions, setQuestions] = useState<QuizQuestion[]>(dummyQuiz);
+  useEffect(() => {
+    const m = loadStudyMaterial();
+    if (m?.quiz?.length) {
+      setQuestions(
+        m.quiz.map((q) => ({
+          question: q.question,
+          options: q.options,
+          answerIndex: q.correctAnswerIndex,
+        })),
+      );
+    }
+  }, []);
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
