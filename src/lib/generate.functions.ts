@@ -77,7 +77,7 @@ export const generateStudyMaterial = createServerFn({ method: "POST" })
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
     const gateway = createLovableAiGatewayProvider(key);
-    const model = gateway("google/gemini-2.5-flash");
+    const model = gateway("google/gemini-2.5-flash-lite");
 
     const result = await generateText({
       model,
