@@ -77,14 +77,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "FlashGenius — Turn your Notes into Flashcards & Quizzes" },
+      { name: "description", content: "Paste your notes and instantly generate flashcards and quizzes. Study smarter with FlashGenius." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "FlashGenius — Turn your Notes into Flashcards & Quizzes" },
+      { property: "og:description", content: "Paste your notes and instantly generate flashcards and quizzes. Study smarter with FlashGenius." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "FlashGenius — Turn your Notes into Flashcards & Quizzes" },
+      { name: "twitter:description", content: "Paste your notes and instantly generate flashcards and quizzes. Study smarter with FlashGenius." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8d7ec492-871f-4d5a-849a-fc41a0bd9fe1/id-preview-b262825c--f4eff0da-ed3e-4566-915e-c69528b3728f.lovable.app-1784964790529.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8d7ec492-871f-4d5a-849a-fc41a0bd9fe1/id-preview-b262825c--f4eff0da-ed3e-4566-915e-c69528b3728f.lovable.app-1784964790529.png" },
     ],
     links: [
       {

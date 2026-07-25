@@ -10,8 +10,8 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "FlashGenius — Turn your Notes into Flashcards & Quizzes" },
       { name: "description", content: "Paste your notes and instantly generate flashcards and quizzes. Study smarter with FlashGenius." },
-      { property: "og:title", content: "FlashGenius — Study smarter" },
-      { property: "og:description", content: "Paste your notes, get instant flashcards and quizzes." },
+      { property: "og:title", content: "FlashGenius — Turn your Notes into Flashcards & Quizzes" },
+      { property: "og:description", content: "Paste your notes and instantly generate flashcards and quizzes. Study smarter with FlashGenius." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
