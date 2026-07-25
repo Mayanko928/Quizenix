@@ -1,29 +1,35 @@
-# Welcome to your Lovable project
+# FlashGenius
 
-This project was built with [Lovable](https://lovable.dev).
+🚀 AI-powered Flashcard & Quiz Generator
 
-## Build with Lovable
+FlashGenius transforms notes, PDFs, and study material into AI-generated flashcards and quizzes to help students learn faster.
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+## ✨ Features
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+- 📄 Paste notes or upload study material
+- 🧠 AI-generated flashcards
+- ❓ AI-generated quizzes
+- 🌙 Modern dark UI
+- 📱 Responsive design
 
-## Development
+## 🛠️ Tech Stack
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+- React
+- TypeScript
+- Tailwind CSS
+- Lovable AI
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+## 🚀 Getting Started
+
+```bash
+npm install
 npm run dev
 ```
 
-## Built with
+## 📷 Preview
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+Coming soon...
+
+## 👨‍💻 Author
+
+**Mayank Goswami**
