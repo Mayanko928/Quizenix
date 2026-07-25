@@ -81,10 +81,8 @@ export const generateStudyMaterial = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model,
-      messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: buildUserPrompt(data.notes) },
-      ],
+      system: SYSTEM,
+      prompt: buildUserPrompt(data.notes),
       providerOptions: {
         lovable: { response_format: { type: "json_object" } },
       },
