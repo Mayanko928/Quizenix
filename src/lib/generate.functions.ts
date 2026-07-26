@@ -5,51 +5,83 @@ import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
 const Input = z.object({ notes: z.string().min(1).max(200000) });
 
-export type StudyMaterial = {
-  flashcards: { id: number; question: string; answer: string }[];
-  quiz: {
-    id: number;
-    difficulty: "easy" | "medium" | "hard";
-    question: string;
-    options: string[];
-    correctAnswerIndex: number;
-    explanation: string;
-  }[];
+export type Flashcard = {
+  id: number;
+  question: string;
+  answer: string;
+  explanation?: string;
+  hint?: string;
+  memoryTrick?: string;
+  example?: string;
+  commonMistake?: string;
+  difficulty?: "easy" | "medium" | "hard";
+  relatedConcepts?: string[];
 };
 
-const SYSTEM = `You are an expert educational content creator. You generate study materials strictly in the JSON format specified. Never include explanations, markdown formatting, or text outside the JSON object. Only output valid JSON.`;
+export type QuizItem = {
+  id: number;
+  difficulty: "easy" | "medium" | "hard";
+  question: string;
+  options: string[];
+  correctAnswerIndex: number;
+  explanation: string;
+  misconception?: string;
+};
+
+export type Concept = { name: string; summary: string; related?: string[] };
+
+export type StudyMaterial = {
+  title?: string;
+  summary?: string;
+  cheatSheet?: string[];
+  formulaSheet?: string[];
+  mindMap?: { root: string; branches: { name: string; children?: string[] }[] };
+  concepts?: Concept[];
+  flashcards: Flashcard[];
+  quiz: QuizItem[];
+  examQuestions?: { marks: 2 | 5 | 10 | 15; question: string; answer: string }[];
+  interviewQuestions?: { level: "beginner" | "intermediate" | "expert"; question: string; answer: string }[];
+};
+
+const SYSTEM = `You are Quizenix — an expert AI Study Coach. Your goal is CONCEPTUAL MASTERY, not memorization. Understand, analyze, connect, teach, explain, challenge and encourage critical thinking. NEVER copy the source text verbatim; always rephrase and teach. Output STRICT JSON only — no markdown, no commentary, no code fences.`;
 
 const JSON_SCHEMA = `{
-  "flashcards": [
-    { "id": 1, "question": "string", "answer": "string" }
-  ],
-  "quiz": [
-    {
-      "id": 1,
-      "difficulty": "easy",
-      "question": "string",
-      "options": ["string", "string", "string", "string"],
-      "correctAnswerIndex": 0,
-      "explanation": "string"
-    }
-  ]
+  "title": "string",
+  "summary": "one-paragraph conceptual overview",
+  "cheatSheet": ["short bullet", "..."],
+  "formulaSheet": ["formula or key rule", "..."],
+  "mindMap": { "root": "string", "branches": [{ "name": "string", "children": ["string"] }] },
+  "concepts": [{ "name": "string", "summary": "string", "related": ["string"] }],
+  "flashcards": [{
+    "id": 1, "question": "string", "answer": "string",
+    "explanation": "string", "hint": "string", "memoryTrick": "string",
+    "example": "real-world example", "commonMistake": "string",
+    "difficulty": "easy", "relatedConcepts": ["string"]
+  }],
+  "quiz": [{
+    "id": 1, "difficulty": "easy", "question": "string",
+    "options": ["string","string","string","string"],
+    "correctAnswerIndex": 0, "explanation": "string",
+    "misconception": "why a student might pick the wrong option"
+  }],
+  "examQuestions": [{ "marks": 5, "question": "string", "answer": "string" }],
+  "interviewQuestions": [{ "level": "beginner", "question": "string", "answer": "string" }]
 }`;
 
 function computeCounts(notes: string) {
   const chars = notes.length;
-  // Scale with note length: ~1 flashcard per 300 chars, clamped 6..60
   const flashcards = Math.max(6, Math.min(60, Math.round(chars / 300)));
-  // ~1 quiz question per 700 chars, clamped 3..25
   const quizTarget = Math.max(3, Math.min(25, Math.round(chars / 700)));
   const easy = Math.max(1, Math.round(quizTarget * 0.4));
   const hard = Math.max(1, Math.round(quizTarget * 0.2));
   const medium = Math.max(1, quizTarget - easy - hard);
-  return { flashcards, quiz: easy + medium + hard, easy, medium, hard };
+  const concepts = Math.max(3, Math.min(12, Math.round(chars / 800)));
+  return { flashcards, quiz: easy + medium + hard, easy, medium, hard, concepts };
 }
 
 function buildUserPrompt(notes: string) {
-  const { flashcards, quiz, easy, medium, hard } = computeCounts(notes);
-  return `Generate study material from the following notes.
+  const { flashcards, quiz, easy, medium, hard, concepts } = computeCounts(notes);
+  return `Analyze the notes below like a great tutor and produce a complete study kit.
 
 NOTES:
 """
@@ -57,15 +89,16 @@ ${notes}
 """
 
 Requirements:
-1. Generate exactly ${flashcards} flashcards. Each has a clear, specific "question" and a concise, accurate "answer" (1-3 sentences). Cover every major concept, sub-topic, definition, and example in the notes — scale breadth to the material. Avoid duplication and order them from foundational to advanced.
-2. Generate exactly ${quiz} multiple-choice quiz questions based on the same notes, distributed across difficulty levels:
-   - ${easy} "easy" questions (direct recall of facts stated in the notes)
-   - ${medium} "medium" questions (require connecting two ideas from the notes)
-   - ${hard} "hard" questions (require applying or inferring beyond what's explicitly stated)
-
-   Each quiz question must have exactly 4 options, exactly one of which is correct. Options must be plausible and similar in length/style (no obviously wrong "joke" answers). Include a one-sentence explanation for why the correct answer is right.
-3. Base everything strictly on the provided notes. Do not introduce facts that aren't in the notes or reasonably inferable from them.
-4. Return ONLY a single JSON object matching this exact schema, with no additional commentary:
+1. Build a CONCEPT MAP first: identify ${concepts} core concepts. For each, give a short "summary" (1-2 sentences, in your own words) and up to 4 "related" concepts. Include as "concepts".
+2. Write a 3-5 sentence "summary" that teaches the big picture (not a copy of the notes).
+3. Produce a "cheatSheet" (6-12 crisp bullets) and, if the material has formulas/rules, a "formulaSheet"; otherwise return an empty array.
+4. Produce a "mindMap" with a single "root" topic and 3-7 "branches", each with up to 5 "children".
+5. Generate exactly ${flashcards} flashcards. Each has: clear "question", concise "answer" (1-3 sentences), teaching "explanation" (why it matters), a helpful "hint", a "memoryTrick" (mnemonic/analogy), a "example" (real-world), a "commonMistake" learners make, "difficulty" (easy|medium|hard) and up to 3 "relatedConcepts". Cover every major concept; order foundational → advanced.
+6. Generate exactly ${quiz} MCQs distributed as ${easy} easy (recall), ${medium} medium (connect two ideas), ${hard} hard (apply/infer). Exactly 4 plausible options, one correct, one-sentence "explanation" and a "misconception" describing why a student might pick a wrong option.
+7. Generate 4 "examQuestions" spread across marks 2, 5, 10, 15 with model answers scaled to the marks.
+8. Generate 4 "interviewQuestions": one beginner, two intermediate, one expert — with strong model answers.
+9. Base everything on the notes; do not invent facts unrelated to them, but DO teach, connect and add analogies/examples.
+10. Return ONLY one JSON object matching this schema, no extra text:
 ${JSON_SCHEMA}`;
 }
 

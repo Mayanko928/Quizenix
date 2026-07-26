@@ -1,17 +1,41 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { BrainCircuit, ArrowRight, Zap, AlertCircle, Eye } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  BrainCircuit,
+  ArrowRight,
+  Zap,
+  AlertCircle,
+  Eye,
+  Upload,
+  Sparkles,
+  Target,
+  MessageCircle,
+  BookOpen,
+  GraduationCap,
+} from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateStudyMaterial } from "../lib/generate.functions";
-import { saveStudyMaterial, clearStudyMaterial } from "../lib/study-store";
+import {
+  saveStudyMaterial,
+  clearStudyMaterial,
+  saveNotes,
+} from "../lib/study-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "FlashGenius — Turn your Notes into Flashcards & Quizzes" },
-      { name: "description", content: "Paste your notes and instantly generate flashcards and quizzes. Study smarter with FlashGenius." },
-      { property: "og:title", content: "FlashGenius — Turn your Notes into Flashcards & Quizzes" },
-      { property: "og:description", content: "Paste your notes and instantly generate flashcards and quizzes. Study smarter with FlashGenius." },
+      { title: "Quizenix — Your AI Study Coach" },
+      {
+        name: "description",
+        content:
+          "Quizenix turns notes, PDFs and lectures into a concept map, flashcards, quizzes and an AI tutor — built for real understanding, not memorization.",
+      },
+      { property: "og:title", content: "Quizenix — Your AI Study Coach" },
+      {
+        property: "og:description",
+        content:
+          "Concept maps, adaptive quizzes, flashcards and an AI tutor — Quizenix helps you actually understand what you study.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -19,12 +43,36 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
+const LOADING_STAGES = [
+  "Reading document",
+  "Building concept graph",
+  "Generating flashcards",
+  "Creating quiz",
+  "Finalizing your study kit",
+];
+
 function Landing() {
   const navigate = useNavigate();
   const generate = useServerFn(generateStudyMaterial);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [stage, setStage] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const stageTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const runStages = () => {
+    setStage(0);
+    stageTimer.current && clearInterval(stageTimer.current);
+    stageTimer.current = setInterval(() => {
+      setStage((s) => Math.min(LOADING_STAGES.length - 1, s + 1));
+    }, 1400);
+  };
+  const stopStages = () => {
+    stageTimer.current && clearInterval(stageTimer.current);
+    stageTimer.current = null;
+  };
 
   const handleGenerate = async () => {
     setError(null);
@@ -35,18 +83,37 @@ function Landing() {
       return;
     }
     setLoading(true);
+    runStages();
     try {
+      saveNotes(trimmed);
       const material = await generate({ data: { notes: trimmed } });
       saveStudyMaterial(material);
       navigate({ to: "/flashcards" });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Something went wrong";
       if (/429/.test(msg)) setError("Rate limited — please wait a moment and try again.");
-      else if (/402/.test(msg)) setError("AI credits exhausted. Please add credits to your workspace.");
+      else if (/402/.test(msg))
+        setError("AI credits exhausted. Please add credits to your workspace.");
       else setError(msg);
     } finally {
+      stopStages();
       setLoading(false);
     }
+  };
+
+  const readFile = async (file: File) => {
+    setError(null);
+    const isText =
+      file.type.startsWith("text/") ||
+      /\.(txt|md|markdown|csv|json)$/i.test(file.name);
+    if (!isText) {
+      setError(
+        `${file.name}: only .txt / .md files are supported right now. Paste the content instead.`,
+      );
+      return;
+    }
+    const text = await file.text();
+    setNotes((cur) => (cur ? cur + "\n\n" + text : text));
   };
 
   return (
@@ -54,9 +121,8 @@ function Landing() {
       className="dark min-h-screen w-full bg-background text-foreground selection:bg-primary/30"
       style={{ fontFamily: "var(--font-sans)" }}
     >
-      {/* Nav */}
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 md:px-12 lg:px-20">
-        <div className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[var(--shadow-glow)]">
             <BrainCircuit className="h-5 w-5" />
           </div>
@@ -64,60 +130,90 @@ function Landing() {
             className="text-lg font-semibold tracking-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            FlashGenius
+            Quizenix
           </span>
-        </div>
+        </Link>
         <div className="hidden items-center gap-1 sm:flex">
-          <Link
-            to="/flashcards"
-            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground"
-          >
+          <Link to="/flashcards" className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground">
             Flashcards
           </Link>
-          <Link
-            to="/quiz"
-            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground"
-          >
+          <Link to="/quiz" className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground">
             Quiz
+          </Link>
+          <Link to="/revision" className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground">
+            Revision
+          </Link>
+          <Link to="/tutor" className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground">
+            AI Tutor
           </Link>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="mx-auto flex w-full max-w-7xl items-center px-6 pb-20 pt-6 md:px-12 lg:min-h-[calc(100vh-88px)] lg:px-20 lg:py-12">
-        <div className="grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-24">
-          {/* Left */}
+      <section className="mx-auto flex w-full max-w-7xl items-center px-6 pb-16 pt-4 md:px-12 lg:min-h-[calc(100vh-88px)] lg:px-20 lg:py-12">
+        <div className="grid w-full items-center gap-12 lg:grid-cols-2 lg:gap-20">
           <div className="space-y-8">
             <div className="space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium uppercase tracking-wide text-primary">
                 <span className="flex h-2 w-2 rounded-full bg-primary shadow-[var(--shadow-glow)]" />
-                New · Quiz Generation Engine
+                AI Study Coach · beta
               </div>
               <h1
                 className="text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl xl:text-7xl"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                Turn your Notes into{" "}
-                <span className="text-primary">Flashcards</span> & Quizzes.
+                Understand it.{" "}
+                <span className="text-primary">Don't just memorize</span> it.
               </h1>
               <p className="max-w-lg text-lg text-muted-foreground md:text-xl">
-                Transform messy lecture notes, PDFs, or articles into structured
-                study material in seconds using advanced AI.
+                Drop your notes and Quizenix builds a concept map, teaches every idea with
+                analogies, then drills you with adaptive flashcards, quizzes and exam questions.
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="relative">
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  const f = e.dataTransfer.files?.[0];
+                  if (f) await readFile(f);
+                }}
+                className={`relative rounded-2xl border ${dragOver ? "border-primary bg-primary/5" : "border-border bg-card"} transition-colors`}
+              >
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Paste your study notes here…"
+                  placeholder="Paste your notes, or drag & drop a .txt / .md file…"
                   disabled={loading}
-                  className="h-48 w-full resize-none rounded-2xl border border-border bg-card p-5 text-[15px] leading-relaxed text-foreground outline-none transition-all placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary"
+                  className="h-48 w-full resize-none rounded-2xl bg-transparent p-5 pb-12 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60"
                 />
-                <div className="pointer-events-none absolute bottom-4 right-4 font-mono text-[10px] text-muted-foreground/70">
+                <div className="pointer-events-none absolute bottom-3 right-4 font-mono text-[10px] text-muted-foreground/70">
                   {notes.length.toLocaleString()} chars
                 </div>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={loading}
+                  className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Upload .txt / .md
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".txt,.md,.markdown,text/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (f) await readFile(f);
+                    e.target.value = "";
+                  }}
+                />
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -128,7 +224,7 @@ function Landing() {
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   <Zap className={`h-4 w-4 ${loading ? "animate-pulse" : ""}`} />
-                  {loading ? "Generating…" : "Generate Study Kit"}
+                  {loading ? "Analyzing…" : "Build my study kit"}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </button>
                 <button
@@ -144,6 +240,38 @@ function Landing() {
                 </button>
               </div>
 
+              {loading && (
+                <div className="space-y-2 rounded-xl border border-border bg-card p-4">
+                  {LOADING_STAGES.map((s, i) => {
+                    const state = i < stage ? "done" : i === stage ? "active" : "wait";
+                    return (
+                      <div key={s} className="flex items-center gap-3 text-sm">
+                        <span
+                          className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${
+                            state === "done"
+                              ? "bg-success text-success-foreground"
+                              : state === "active"
+                                ? "bg-primary text-primary-foreground animate-pulse"
+                                : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {state === "done" ? "✓" : i + 1}
+                        </span>
+                        <span
+                          className={
+                            state === "wait"
+                              ? "text-muted-foreground/60"
+                              : "text-foreground"
+                          }
+                        >
+                          {s}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
               {error ? (
                 <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -153,15 +281,12 @@ function Landing() {
             </div>
           </div>
 
-          {/* Right — Product preview */}
           <div className="relative hidden h-[520px] items-center justify-center lg:flex">
             <div className="absolute h-72 w-72 rounded-full bg-primary/20 blur-[100px]" />
             <div className="relative w-full max-w-md">
-              {/* Back card */}
               <div className="absolute inset-0 -translate-y-2 rotate-[-6deg] rounded-3xl border border-border bg-card opacity-40" />
               <div className="absolute inset-0 translate-y-2 rotate-[3deg] rounded-3xl border border-border bg-card opacity-60" />
 
-              {/* Main card */}
               <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-[var(--shadow-card)]">
                 <div className="mb-8 flex items-center justify-between">
                   <div className="flex gap-1.5">
@@ -170,7 +295,7 @@ function Landing() {
                     <div className="h-3 w-3 rounded-full bg-success/30" />
                   </div>
                   <div className="font-mono text-xs tracking-widest text-primary">
-                    CARD 04 / 12
+                    CONCEPT 04 / 12
                   </div>
                 </div>
 
@@ -180,22 +305,26 @@ function Landing() {
                       className="inline-block rounded-md bg-border/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-tight text-primary"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      Biological Psychology
+                      Neuroscience
                     </span>
                     <h3
                       className="text-2xl font-semibold leading-snug"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      What is the primary function of the Myelin Sheath in neurons?
+                      Why does the myelin sheath make neurons faster?
                     </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Think of it as insulation on a wire — the signal jumps between gaps
+                      instead of leaking along the whole length.
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-3 border-t border-border pt-4">
                     <div className="rounded-lg bg-border/50 p-2">
-                      <Eye className="h-5 w-5 text-primary" />
+                      <Sparkles className="h-5 w-5 text-primary" />
                     </div>
                     <span className="text-sm italic text-muted-foreground">
-                      Reveal answer…
+                      Tap for hint · analogy · example
                     </span>
                   </div>
                 </div>
@@ -205,20 +334,19 @@ function Landing() {
                 </div>
               </div>
 
-              {/* Floating badge */}
               <div className="absolute -right-6 top-[22%] flex rotate-[10deg] items-center gap-3 rounded-2xl border-2 border-background bg-primary p-4 text-primary-foreground shadow-[var(--shadow-glow)]">
                 <div className="rounded-lg bg-white/20 p-2">
-                  <Zap className="h-5 w-5" />
+                  <Target className="h-5 w-5" />
                 </div>
                 <div className="pr-2">
                   <div className="text-[10px] font-bold uppercase opacity-80">
-                    AI Analysis
+                    Weakness detected
                   </div>
                   <div
                     className="text-sm font-bold"
                     style={{ fontFamily: "var(--font-display)" }}
                   >
-                    High Accuracy
+                    Practice queued
                   </div>
                 </div>
               </div>
@@ -227,40 +355,31 @@ function Landing() {
         </div>
       </section>
 
-      {/* Feature chips */}
-      <section className="mx-auto grid max-w-7xl gap-3 px-6 pb-20 sm:grid-cols-3 md:px-12 lg:px-20">
-        <FeatureCard
-          title="Flashcards"
-          desc="Flip through smart cards with a satisfying tap."
-          to="/flashcards"
-          navigate={navigate}
-        />
-        <FeatureCard
-          title="Quiz mode"
-          desc="Test yourself with instant feedback and scoring."
-          to="/quiz"
-          navigate={navigate}
-        />
-        <FeatureCard
-          title="Instant AI"
-          desc="Notes in, structured study kit out — in seconds."
-          to="/flashcards"
-          navigate={navigate}
-        />
+      <section className="mx-auto grid max-w-7xl gap-3 px-6 pb-20 sm:grid-cols-2 md:px-12 lg:grid-cols-4 lg:px-20">
+        <FeatureCard icon={<Sparkles className="h-4 w-4" />} title="Concept map" desc="AI understands your notes before generating anything." to="/flashcards" navigate={navigate} />
+        <FeatureCard icon={<BookOpen className="h-4 w-4" />} title="Flashcards" desc="Hints, mnemonics, examples & common mistakes." to="/flashcards" navigate={navigate} />
+        <FeatureCard icon={<GraduationCap className="h-4 w-4" />} title="Exam mode" desc="2 / 5 / 10 / 15-mark questions with model answers." to="/revision" navigate={navigate} />
+        <FeatureCard icon={<MessageCircle className="h-4 w-4" />} title="AI Tutor" desc="Ask for analogies, examples, or 'explain like I'm 12'." to="/tutor" navigate={navigate} />
       </section>
+
+      <footer className="mx-auto max-w-7xl px-6 pb-10 text-center text-xs text-muted-foreground md:px-12 lg:px-20">
+        Quizenix · built for conceptual mastery, not memorization.
+      </footer>
     </main>
   );
 }
 
 function FeatureCard({
+  icon,
   title,
   desc,
   to,
   navigate,
 }: {
+  icon: React.ReactNode;
   title: string;
   desc: string;
-  to: "/flashcards" | "/quiz";
+  to: "/flashcards" | "/quiz" | "/tutor" | "/revision";
   navigate: ReturnType<typeof useNavigate>;
 }) {
   return (
@@ -270,14 +389,17 @@ function FeatureCard({
     >
       <div className="flex items-center justify-between">
         <span
-          className="text-base font-semibold"
+          className="flex items-center gap-2 text-base font-semibold"
           style={{ fontFamily: "var(--font-display)" }}
         >
+          <span className="grid h-7 w-7 place-items-center rounded-lg bg-primary/15 text-primary">
+            {icon}
+          </span>
           {title}
         </span>
         <ArrowRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">{desc}</p>
+      <p className="mt-2 text-sm text-muted-foreground">{desc}</p>
     </button>
   );
 }
