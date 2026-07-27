@@ -1,9 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, X, Trophy, RotateCcw, Info } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { dummyQuiz } from "../lib/dummy-data";
 import { loadStudyMaterial } from "../lib/study-store";
 import type { QuizItem } from "../lib/generate.functions";
+import { recordQuizAttempts } from "../lib/study.functions";
+import { useAuth } from "../hooks/use-auth";
 
 export const Route = createFileRoute("/quiz")({
   head: () => ({
@@ -40,6 +43,10 @@ function QuizPage() {
   const [questions, setQuestions] = useState<QuizItem[]>(() =>
     dummyQuiz.map(toRichQuiz),
   );
+  const record = useServerFn(recordQuizAttempts);
+  const { user } = useAuth();
+  const attemptsRef = useRef<{ questionId: number; difficulty: "easy" | "medium" | "hard"; correct: boolean }[]>([]);
+  const submittedRef = useRef(false);
   useEffect(() => {
     const m = loadStudyMaterial();
     if (m?.quiz?.length) setQuestions(m.quiz);
@@ -56,13 +63,24 @@ function QuizPage() {
   const pick = (i: number) => {
     if (selected !== null) return;
     setSelected(i);
-    if (i === q.correctAnswerIndex) setScore((s) => s + 1);
+    const isCorrect = i === q.correctAnswerIndex;
+    attemptsRef.current.push({
+      questionId: q.id,
+      difficulty: (q.difficulty ?? "medium") as "easy" | "medium" | "hard",
+      correct: isCorrect,
+    });
+    if (isCorrect) setScore((s) => s + 1);
     else setWrongIds((w) => [...w, q.id]);
   };
 
   const next = () => {
-    if (idx + 1 >= questions.length) setDone(true);
-    else {
+    if (idx + 1 >= questions.length) {
+      setDone(true);
+      if (user && !submittedRef.current && attemptsRef.current.length) {
+        submittedRef.current = true;
+        record({ data: { attempts: attemptsRef.current } }).catch((e) => console.warn(e));
+      }
+    } else {
       setIdx((i) => i + 1);
       setSelected(null);
     }
@@ -74,6 +92,8 @@ function QuizPage() {
     setScore(0);
     setDone(false);
     setWrongIds([]);
+    attemptsRef.current = [];
+    submittedRef.current = false;
   };
 
   if (done) {

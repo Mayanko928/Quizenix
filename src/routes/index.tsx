@@ -12,14 +12,17 @@ import {
   MessageCircle,
   BookOpen,
   GraduationCap,
+  LayoutDashboard,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateStudyMaterial } from "../lib/generate.functions";
+import { saveStudySet } from "../lib/study.functions";
 import {
   saveStudyMaterial,
   clearStudyMaterial,
   saveNotes,
 } from "../lib/study-store";
+import { useAuth } from "../hooks/use-auth";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,6 +57,8 @@ const LOADING_STAGES = [
 function Landing() {
   const navigate = useNavigate();
   const generate = useServerFn(generateStudyMaterial);
+  const save = useServerFn(saveStudySet);
+  const { user } = useAuth();
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
@@ -88,6 +93,14 @@ function Landing() {
       saveNotes(trimmed);
       const material = await generate({ data: { notes: trimmed } });
       saveStudyMaterial(material);
+      if (user) {
+        const title = material.title?.slice(0, 120) || trimmed.slice(0, 60).replace(/\s+/g, " ") + "…";
+        try {
+          await save({ data: { title, notes: trimmed, material: material as any } });
+        } catch (e) {
+          console.warn("Save failed", e);
+        }
+      }
       navigate({ to: "/flashcards" });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Something went wrong";
@@ -146,6 +159,21 @@ function Landing() {
           <Link to="/tutor" className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground">
             AI Tutor
           </Link>
+          {user ? (
+            <Link
+              to="/dashboard"
+              className="ml-2 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-[var(--shadow-glow)] hover:brightness-110"
+            >
+              <LayoutDashboard className="h-4 w-4" /> Dashboard
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              className="ml-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:border-primary/50"
+            >
+              Sign in
+            </Link>
+          )}
         </div>
       </nav>
 
