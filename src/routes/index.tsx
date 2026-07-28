@@ -13,16 +13,28 @@ import {
   BookOpen,
   GraduationCap,
   LayoutDashboard,
+  FileText,
+  Loader2,
+  X,
+  CheckCircle2,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateStudyMaterial } from "../lib/generate.functions";
 import { saveStudySet } from "../lib/study.functions";
+import { ocrImage } from "../lib/ocr.functions";
 import {
   saveStudyMaterial,
   clearStudyMaterial,
   saveNotes,
 } from "../lib/study-store";
 import { useAuth } from "../hooks/use-auth";
+import {
+  ACCEPT_ATTR,
+  formatBytes,
+  isAcceptedFile,
+  parseFile,
+  type ParseProgress,
+} from "../lib/file-parser";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,16 +66,26 @@ const LOADING_STAGES = [
   "Finalizing your study kit",
 ];
 
+type FileEntry = {
+  name: string;
+  size: number;
+  status: "reading" | "extracting" | "ocr" | "done" | "error";
+  message?: string;
+  chars?: number;
+};
+
 function Landing() {
   const navigate = useNavigate();
   const generate = useServerFn(generateStudyMaterial);
   const save = useServerFn(saveStudySet);
+  const ocr = useServerFn(ocrImage);
   const { user } = useAuth();
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [files, setFiles] = useState<FileEntry[]>([]);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const stageTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -78,6 +100,9 @@ function Landing() {
     stageTimer.current && clearInterval(stageTimer.current);
     stageTimer.current = null;
   };
+
+  const updateFile = (name: string, patch: Partial<FileEntry>) =>
+    setFiles((cur) => cur.map((f) => (f.name === name ? { ...f, ...patch } : f)));
 
   const handleGenerate = async () => {
     setError(null);
@@ -114,20 +139,46 @@ function Landing() {
     }
   };
 
-  const readFile = async (file: File) => {
+  const handleFiles = async (fileList: FileList | File[]) => {
     setError(null);
-    const isText =
-      file.type.startsWith("text/") ||
-      /\.(txt|md|markdown|csv|json)$/i.test(file.name);
-    if (!isText) {
+    const incoming = Array.from(fileList);
+    const rejected = incoming.filter((f) => !isAcceptedFile(f));
+    if (rejected.length) {
       setError(
-        `${file.name}: only .txt / .md files are supported right now. Paste the content instead.`,
+        `Unsupported: ${rejected.map((f) => f.name).join(", ")}. Try PDF, DOCX, PPTX, XLSX, TXT, MD or an image.`,
       );
-      return;
     }
-    const text = await file.text();
-    setNotes((cur) => (cur ? cur + "\n\n" + text : text));
+    const accepted = incoming.filter(isAcceptedFile);
+    if (!accepted.length) return;
+
+    setFiles((cur) => [
+      ...cur,
+      ...accepted.map<FileEntry>((f) => ({ name: f.name, size: f.size, status: "reading" })),
+    ]);
+
+    const onProgress = (p: ParseProgress) =>
+      updateFile(p.file, { status: p.stage as FileEntry["status"], message: p.message });
+
+    let combined = "";
+    for (const file of accepted) {
+      try {
+        const result = await parseFile(file, (d) => ocr({ data: d }), onProgress);
+        if (result.text) combined += (combined ? "\n\n" : "") + `# ${file.name}\n${result.text}`;
+        updateFile(file.name, {
+          status: result.text ? "done" : "error",
+          message: result.warning ?? (result.text ? undefined : "No text extracted"),
+          chars: result.text.length,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to read file";
+        updateFile(file.name, { status: "error", message: msg });
+      }
+    }
+    if (combined) setNotes((cur) => (cur ? cur + "\n\n" + combined : combined));
   };
+
+  const removeFile = (name: string) => setFiles((cur) => cur.filter((f) => f.name !== name));
+
 
   return (
     <main
