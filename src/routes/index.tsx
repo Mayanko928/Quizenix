@@ -259,15 +259,14 @@ function Landing() {
                 onDrop={async (e) => {
                   e.preventDefault();
                   setDragOver(false);
-                  const f = e.dataTransfer.files?.[0];
-                  if (f) await readFile(f);
+                  if (e.dataTransfer.files?.length) await handleFiles(e.dataTransfer.files);
                 }}
                 className={`relative rounded-2xl border ${dragOver ? "border-primary bg-primary/5" : "border-border bg-card"} transition-colors`}
               >
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Paste your notes, or drag & drop a .txt / .md file…"
+                  placeholder="Paste notes, or drop PDF / DOCX / PPTX / XLSX / TXT / MD / image…"
                   disabled={loading}
                   className="h-48 w-full resize-none rounded-2xl bg-transparent p-5 pb-12 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60"
                 />
@@ -280,20 +279,56 @@ function Landing() {
                   className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  Upload .txt / .md
+                  Upload files
                 </button>
                 <input
                   ref={fileRef}
                   type="file"
-                  accept=".txt,.md,.markdown,text/*"
+                  multiple
+                  accept={ACCEPT_ATTR}
                   className="hidden"
                   onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (f) await readFile(f);
+                    if (e.target.files?.length) await handleFiles(e.target.files);
                     e.target.value = "";
                   }}
                 />
               </div>
+
+              {files.length > 0 && (
+                <ul className="space-y-1.5 rounded-xl border border-border bg-card p-2">
+                  {files.map((f) => (
+                    <li key={f.name} className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs">
+                      <FileStatusIcon status={f.status} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate font-medium text-foreground">{f.name}</span>
+                          <span className="shrink-0 text-muted-foreground/70">· {formatBytes(f.size)}</span>
+                        </div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {f.status === "done"
+                            ? f.message ?? `Extracted ${f.chars?.toLocaleString() ?? 0} chars`
+                            : f.status === "error"
+                              ? f.message ?? "Failed"
+                              : f.message ??
+                                (f.status === "ocr"
+                                  ? "Running OCR"
+                                  : f.status === "extracting"
+                                    ? "Extracting text"
+                                    : "Reading")}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFile(f.name)}
+                        className="rounded p-1 text-muted-foreground/70 hover:bg-background hover:text-foreground"
+                        aria-label={`Remove ${f.name}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <button
