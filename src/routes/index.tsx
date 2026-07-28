@@ -13,16 +13,28 @@ import {
   BookOpen,
   GraduationCap,
   LayoutDashboard,
+  FileText,
+  Loader2,
+  X,
+  CheckCircle2,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateStudyMaterial } from "../lib/generate.functions";
 import { saveStudySet } from "../lib/study.functions";
+import { ocrImage } from "../lib/ocr.functions";
 import {
   saveStudyMaterial,
   clearStudyMaterial,
   saveNotes,
 } from "../lib/study-store";
 import { useAuth } from "../hooks/use-auth";
+import {
+  ACCEPT_ATTR,
+  formatBytes,
+  isAcceptedFile,
+  parseFile,
+  type ParseProgress,
+} from "../lib/file-parser";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,16 +66,26 @@ const LOADING_STAGES = [
   "Finalizing your study kit",
 ];
 
+type FileEntry = {
+  name: string;
+  size: number;
+  status: "reading" | "extracting" | "ocr" | "done" | "error";
+  message?: string;
+  chars?: number;
+};
+
 function Landing() {
   const navigate = useNavigate();
   const generate = useServerFn(generateStudyMaterial);
   const save = useServerFn(saveStudySet);
+  const ocr = useServerFn(ocrImage);
   const { user } = useAuth();
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [stage, setStage] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [files, setFiles] = useState<FileEntry[]>([]);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const stageTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -78,6 +100,9 @@ function Landing() {
     stageTimer.current && clearInterval(stageTimer.current);
     stageTimer.current = null;
   };
+
+  const updateFile = (name: string, patch: Partial<FileEntry>) =>
+    setFiles((cur) => cur.map((f) => (f.name === name ? { ...f, ...patch } : f)));
 
   const handleGenerate = async () => {
     setError(null);
@@ -114,20 +139,46 @@ function Landing() {
     }
   };
 
-  const readFile = async (file: File) => {
+  const handleFiles = async (fileList: FileList | File[]) => {
     setError(null);
-    const isText =
-      file.type.startsWith("text/") ||
-      /\.(txt|md|markdown|csv|json)$/i.test(file.name);
-    if (!isText) {
+    const incoming = Array.from(fileList);
+    const rejected = incoming.filter((f) => !isAcceptedFile(f));
+    if (rejected.length) {
       setError(
-        `${file.name}: only .txt / .md files are supported right now. Paste the content instead.`,
+        `Unsupported: ${rejected.map((f) => f.name).join(", ")}. Try PDF, DOCX, PPTX, XLSX, TXT, MD or an image.`,
       );
-      return;
     }
-    const text = await file.text();
-    setNotes((cur) => (cur ? cur + "\n\n" + text : text));
+    const accepted = incoming.filter(isAcceptedFile);
+    if (!accepted.length) return;
+
+    setFiles((cur) => [
+      ...cur,
+      ...accepted.map<FileEntry>((f) => ({ name: f.name, size: f.size, status: "reading" })),
+    ]);
+
+    const onProgress = (p: ParseProgress) =>
+      updateFile(p.file, { status: p.stage as FileEntry["status"], message: p.message });
+
+    let combined = "";
+    for (const file of accepted) {
+      try {
+        const result = await parseFile(file, (d) => ocr({ data: d }), onProgress);
+        if (result.text) combined += (combined ? "\n\n" : "") + `# ${file.name}\n${result.text}`;
+        updateFile(file.name, {
+          status: result.text ? "done" : "error",
+          message: result.warning ?? (result.text ? undefined : "No text extracted"),
+          chars: result.text.length,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to read file";
+        updateFile(file.name, { status: "error", message: msg });
+      }
+    }
+    if (combined) setNotes((cur) => (cur ? cur + "\n\n" + combined : combined));
   };
+
+  const removeFile = (name: string) => setFiles((cur) => cur.filter((f) => f.name !== name));
+
 
   return (
     <main
@@ -208,15 +259,14 @@ function Landing() {
                 onDrop={async (e) => {
                   e.preventDefault();
                   setDragOver(false);
-                  const f = e.dataTransfer.files?.[0];
-                  if (f) await readFile(f);
+                  if (e.dataTransfer.files?.length) await handleFiles(e.dataTransfer.files);
                 }}
                 className={`relative rounded-2xl border ${dragOver ? "border-primary bg-primary/5" : "border-border bg-card"} transition-colors`}
               >
                 <textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Paste your notes, or drag & drop a .txt / .md file…"
+                  placeholder="Paste notes, or drop PDF / DOCX / PPTX / XLSX / TXT / MD / image…"
                   disabled={loading}
                   className="h-48 w-full resize-none rounded-2xl bg-transparent p-5 pb-12 text-[15px] leading-relaxed text-foreground outline-none placeholder:text-muted-foreground/60"
                 />
@@ -229,20 +279,56 @@ function Landing() {
                   className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/60 px-2.5 py-1.5 text-xs text-muted-foreground transition hover:border-primary/50 hover:text-foreground"
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  Upload .txt / .md
+                  Upload files
                 </button>
                 <input
                   ref={fileRef}
                   type="file"
-                  accept=".txt,.md,.markdown,text/*"
+                  multiple
+                  accept={ACCEPT_ATTR}
                   className="hidden"
                   onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (f) await readFile(f);
+                    if (e.target.files?.length) await handleFiles(e.target.files);
                     e.target.value = "";
                   }}
                 />
               </div>
+
+              {files.length > 0 && (
+                <ul className="space-y-1.5 rounded-xl border border-border bg-card p-2">
+                  {files.map((f) => (
+                    <li key={f.name} className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-xs">
+                      <FileStatusIcon status={f.status} />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="truncate font-medium text-foreground">{f.name}</span>
+                          <span className="shrink-0 text-muted-foreground/70">· {formatBytes(f.size)}</span>
+                        </div>
+                        <div className="truncate text-[11px] text-muted-foreground">
+                          {f.status === "done"
+                            ? f.message ?? `Extracted ${f.chars?.toLocaleString() ?? 0} chars`
+                            : f.status === "error"
+                              ? f.message ?? "Failed"
+                              : f.message ??
+                                (f.status === "ocr"
+                                  ? "Running OCR"
+                                  : f.status === "extracting"
+                                    ? "Extracting text"
+                                    : "Reading")}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => removeFile(f.name)}
+                        className="rounded p-1 text-muted-foreground/70 hover:bg-background hover:text-foreground"
+                        aria-label={`Remove ${f.name}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <button
@@ -431,3 +517,10 @@ function FeatureCard({
     </button>
   );
 }
+
+function FileStatusIcon({ status }: { status: FileEntry["status"] }) {
+  if (status === "done") return <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />;
+  if (status === "error") return <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />;
+  return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />;
+}
+
