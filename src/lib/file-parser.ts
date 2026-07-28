@@ -73,9 +73,10 @@ async function readAsDataUrl(file: File): Promise<string> {
 
 async function parsePdf(file: File, onProgress?: (p: ParseProgress) => void): Promise<ParseResult> {
   const pdfjs = await import("pdfjs-dist");
-  // @ts-expect-error vite worker url import
-  const workerUrl = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
-  (pdfjs as any).GlobalWorkerOptions.workerSrc = workerUrl;
+  const workerMod = (await import(
+    /* @vite-ignore */ "pdfjs-dist/build/pdf.worker.min.mjs?url"
+  )) as { default: string };
+  (pdfjs as any).GlobalWorkerOptions.workerSrc = workerMod.default;
   const buf = await file.arrayBuffer();
   const doc = await (pdfjs as any).getDocument({ data: buf }).promise;
   let out = "";
@@ -101,7 +102,9 @@ async function parsePdf(file: File, onProgress?: (p: ParseProgress) => void): Pr
 }
 
 async function parseDocx(file: File): Promise<ParseResult> {
-  const mammoth = await import("mammoth/mammoth.browser");
+  const mammoth = (await import(
+    /* @vite-ignore */ "mammoth/mammoth.browser"
+  )) as unknown as { extractRawText: (o: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }> };
   const buf = await file.arrayBuffer();
   const res = await (mammoth as any).extractRawText({ arrayBuffer: buf });
   return { file: file.name, kind: "docx", text: String(res.value ?? "").trim() };
