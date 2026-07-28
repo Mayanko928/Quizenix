@@ -102,11 +102,9 @@ async function parsePdf(file: File, onProgress?: (p: ParseProgress) => void): Pr
 }
 
 async function parseDocx(file: File): Promise<ParseResult> {
-  const mammoth = (await import(
-    /* @vite-ignore */ "mammoth/mammoth.browser"
-  )) as unknown as { extractRawText: (o: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }> };
+  const mammoth = await import("mammoth/mammoth.browser");
   const buf = await file.arrayBuffer();
-  const res = await (mammoth as any).extractRawText({ arrayBuffer: buf });
+  const res = await mammoth.extractRawText({ arrayBuffer: buf });
   return { file: file.name, kind: "docx", text: String(res.value ?? "").trim() };
 }
 
