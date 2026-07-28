@@ -517,3 +517,10 @@ function FeatureCard({
     </button>
   );
 }
+
+function FileStatusIcon({ status }: { status: FileEntry["status"] }) {
+  if (status === "done") return <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />;
+  if (status === "error") return <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />;
+  return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />;
+}
+
