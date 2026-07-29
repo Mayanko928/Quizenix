@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, BookOpen, GraduationCap, Network, ListChecks, FileText } from "lucide-react";
+import { ArrowLeft, BookOpen, GraduationCap, Network, ListChecks, FileText, Target, Clock, Layers, Gauge, Star } from "lucide-react";
 import { loadStudyMaterial } from "../lib/study-store";
-import type { StudyMaterial } from "../lib/generate.functions";
+import type { StudyMaterial, HierarchyNode, Concept } from "../lib/generate.functions";
 
 export const Route = createFileRoute("/revision")({
   head: () => ({
@@ -50,6 +50,57 @@ function RevisionPage() {
               <h2 style={{ fontFamily: "var(--font-display)" }} className="text-3xl font-bold">
                 {m.title}
               </h2>
+            )}
+
+            {m.analysis && (
+              <Section icon={<Gauge className="h-4 w-4" />} title="AI analysis">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Stat icon={<Clock className="h-4 w-4" />} label="Est. study time" value={m.analysis.totalStudyMinutes ? `${m.analysis.totalStudyMinutes} min` : "—"} />
+                  <Stat icon={<Gauge className="h-4 w-4" />} label="Overall difficulty" value={m.analysis.overallDifficulty ?? "—"} />
+                  <Stat icon={<Layers className="h-4 w-4" />} label="Concepts detected" value={String(m.concepts?.length ?? m.analysis.knowledgeGraph?.nodes?.length ?? 0)} />
+                </div>
+                {m.analysis.overview && (
+                  <p className="mt-3 text-sm leading-relaxed text-foreground/90">{m.analysis.overview}</p>
+                )}
+                {m.analysis.learningObjectives?.length ? (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <Target className="h-3.5 w-3.5" /> Learning objectives
+                    </div>
+                    <ul className="space-y-1.5 text-sm">
+                      {m.analysis.learningObjectives.map((o, i) => (
+                        <li key={i} className="flex gap-2"><span className="text-primary">✓</span><span>{o}</span></li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {m.analysis.hierarchy && (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <Layers className="h-3.5 w-3.5" /> Concept hierarchy
+                    </div>
+                    <div className="rounded-xl border border-border bg-background/40 p-3 text-sm">
+                      <Hierarchy node={m.analysis.hierarchy} />
+                    </div>
+                  </div>
+                )}
+                {m.analysis.knowledgeGraph?.edges?.length ? (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <Network className="h-3.5 w-3.5" /> Knowledge graph (prerequisites & links)
+                    </div>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      {m.analysis.knowledgeGraph.edges.slice(0, 30).map((e, i) => (
+                        <li key={i} className="font-mono">
+                          <span className="text-foreground">{e.from}</span>
+                          <span className="mx-1.5 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] uppercase text-primary">{e.relation ?? "→"}</span>
+                          <span className="text-foreground">{e.to}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </Section>
             )}
 
             {m.summary && (
@@ -107,11 +158,8 @@ function RevisionPage() {
             {m.concepts?.length ? (
               <Section icon={<BookOpen className="h-4 w-4" />} title="Core concepts">
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {m.concepts.map((c, i) => (
-                    <div key={i} className="rounded-xl border border-border bg-background/40 p-3">
-                      <div className="font-semibold">{c.name}</div>
-                      <p className="mt-1 text-sm text-muted-foreground">{c.summary}</p>
-                    </div>
+                  {[...m.concepts].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0)).map((c, i) => (
+                    <ConceptCard key={i} c={c} />
                   ))}
                 </div>
               </Section>
@@ -168,5 +216,54 @@ function Section({ icon, title, children }: { icon: React.ReactNode; title: stri
       </div>
       {children}
     </section>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+      <div className="mt-1 text-lg font-semibold capitalize">{value}</div>
+    </div>
+  );
+}
+
+function Hierarchy({ node, depth = 0 }: { node: HierarchyNode; depth?: number }) {
+  return (
+    <div style={{ paddingLeft: depth * 14 }} className="py-0.5">
+      <div className="flex items-center gap-2">
+        {node.kind && (
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase text-primary">{node.kind}</span>
+        )}
+        <span className={depth === 0 ? "font-semibold" : ""}>{node.name}</span>
+      </div>
+      {node.children?.map((c, i) => <Hierarchy key={i} node={c} depth={depth + 1} />)}
+    </div>
+  );
+}
+
+function ConceptCard({ c }: { c: Concept }) {
+  const stars = c.importance ?? 0;
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="font-semibold">{c.name}</div>
+        {stars > 0 && (
+          <div className="flex shrink-0 items-center gap-0.5" title={`${stars}/5 importance`}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className={`h-3 w-3 ${i < stars ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">{c.summary}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+        {c.difficulty && <span className="rounded bg-background px-1.5 py-0.5 capitalize text-muted-foreground border border-border">{c.difficulty}</span>}
+        {c.studyMinutes ? <span className="rounded bg-background px-1.5 py-0.5 text-muted-foreground border border-border">{c.studyMinutes} min</span> : null}
+        {c.prerequisites?.length ? <span className="rounded bg-background px-1.5 py-0.5 text-muted-foreground border border-border">needs: {c.prerequisites.join(", ")}</span> : null}
+      </div>
+      {c.whyItMatters && <p className="mt-2 text-xs italic text-foreground/70">Why: {c.whyItMatters}</p>}
+      {c.importanceReason && stars >= 4 && <p className="mt-1 text-xs text-primary/80">★ {c.importanceReason}</p>}
+    </div>
   );
 }
