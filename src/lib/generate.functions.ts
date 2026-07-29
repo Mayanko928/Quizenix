@@ -28,7 +28,37 @@ export type QuizItem = {
   misconception?: string;
 };
 
-export type Concept = { name: string; summary: string; related?: string[] };
+export type Concept = {
+  name: string;
+  summary: string;
+  related?: string[];
+  importance?: 1 | 2 | 3 | 4 | 5;
+  importanceReason?: string;
+  difficulty?: "easy" | "medium" | "hard" | "expert" | "research";
+  studyMinutes?: number;
+  prerequisites?: string[];
+  whyItMatters?: string;
+};
+
+export type HierarchyNode = {
+  name: string;
+  kind?: "chapter" | "topic" | "subtopic" | "concept";
+  children?: HierarchyNode[];
+};
+
+export type KnowledgeGraph = {
+  nodes: { id: string; label: string; importance?: 1 | 2 | 3 | 4 | 5 }[];
+  edges: { from: string; to: string; relation?: string }[];
+};
+
+export type Analysis = {
+  overview?: string;
+  totalStudyMinutes?: number;
+  overallDifficulty?: "easy" | "medium" | "hard" | "expert" | "research";
+  learningObjectives?: string[];
+  hierarchy?: HierarchyNode;
+  knowledgeGraph?: KnowledgeGraph;
+};
 
 export type StudyMaterial = {
   title?: string;
@@ -37,6 +67,7 @@ export type StudyMaterial = {
   formulaSheet?: string[];
   mindMap?: { root: string; branches: { name: string; children?: string[] }[] };
   concepts?: Concept[];
+  analysis?: Analysis;
   flashcards: Flashcard[];
   quiz: QuizItem[];
   examQuestions?: { marks: 2 | 5 | 10 | 15; question: string; answer: string }[];
