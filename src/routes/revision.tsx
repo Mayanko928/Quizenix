@@ -158,11 +158,8 @@ function RevisionPage() {
             {m.concepts?.length ? (
               <Section icon={<BookOpen className="h-4 w-4" />} title="Core concepts">
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {m.concepts.map((c, i) => (
-                    <div key={i} className="rounded-xl border border-border bg-background/40 p-3">
-                      <div className="font-semibold">{c.name}</div>
-                      <p className="mt-1 text-sm text-muted-foreground">{c.summary}</p>
-                    </div>
+                  {[...m.concepts].sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0)).map((c, i) => (
+                    <ConceptCard key={i} c={c} />
                   ))}
                 </div>
               </Section>
