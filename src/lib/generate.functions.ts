@@ -74,15 +74,32 @@ export type StudyMaterial = {
   interviewQuestions?: { level: "beginner" | "intermediate" | "expert"; question: string; answer: string }[];
 };
 
-const SYSTEM = `You are Quizenix — an expert AI Study Coach. Your goal is CONCEPTUAL MASTERY, not memorization. Understand, analyze, connect, teach, explain, challenge and encourage critical thinking. NEVER copy the source text verbatim; always rephrase and teach. Output STRICT JSON only — no markdown, no commentary, no code fences.`;
+const SYSTEM = `You are Quizenix — an expert AI Study Coach who behaves like a seasoned professor. FIRST fully understand the material as a whole (structure, hierarchy, prerequisites, importance), THEN teach it. Never copy source text verbatim; always rephrase and teach. If something isn't in the notes but is standard background, you may add it inside "whyItMatters" or explanations rather than inventing new facts as if from the source. Output STRICT JSON only — no markdown, no commentary, no code fences.`;
 
 const JSON_SCHEMA = `{
   "title": "string",
   "summary": "one-paragraph conceptual overview",
+  "analysis": {
+    "overview": "2-3 sentence read of the material as a whole",
+    "totalStudyMinutes": 90,
+    "overallDifficulty": "easy|medium|hard|expert|research",
+    "learningObjectives": ["After studying this you will be able to ..."],
+    "hierarchy": { "name": "root", "kind": "chapter", "children": [{ "name": "topic", "kind": "topic", "children": [{ "name": "subtopic", "kind": "subtopic", "children": [{ "name": "concept", "kind": "concept" }] }] }] },
+    "knowledgeGraph": {
+      "nodes": [{ "id": "concept-slug", "label": "Concept", "importance": 5 }],
+      "edges": [{ "from": "concept-slug", "to": "other-slug", "relation": "requires|extends|contrasts|applies-to" }]
+    }
+  },
   "cheatSheet": ["short bullet", "..."],
   "formulaSheet": ["formula or key rule", "..."],
   "mindMap": { "root": "string", "branches": [{ "name": "string", "children": ["string"] }] },
-  "concepts": [{ "name": "string", "summary": "string", "related": ["string"] }],
+  "concepts": [{
+    "name": "string", "summary": "string", "related": ["string"],
+    "importance": 5, "importanceReason": "why this matters for exams/interviews/foundations",
+    "difficulty": "easy|medium|hard|expert|research",
+    "studyMinutes": 15, "prerequisites": ["string"],
+    "whyItMatters": "1-2 sentence teacher's note"
+  }],
   "flashcards": [{
     "id": 1, "question": "string", "answer": "string",
     "explanation": "string", "hint": "string", "memoryTrick": "string",
@@ -112,7 +129,7 @@ function computeCounts(notes: string) {
 
 function buildUserPrompt(notes: string) {
   const { flashcards, quiz, easy, medium, hard, concepts } = computeCounts(notes);
-  return `Analyze the notes below like a great tutor and produce a complete study kit.
+  return `Act like a professor preparing to teach this material. First understand it end-to-end, then produce a complete study kit.
 
 NOTES:
 """
@@ -120,16 +137,22 @@ ${notes}
 """
 
 Requirements:
-1. Build a CONCEPT MAP first: identify ${concepts} core concepts. For each, give a short "summary" (1-2 sentences, in your own words) and up to 4 "related" concepts. Include as "concepts".
-2. Write a 3-5 sentence "summary" that teaches the big picture (not a copy of the notes).
-3. Produce a "cheatSheet" (6-12 crisp bullets) and, if the material has formulas/rules, a "formulaSheet"; otherwise return an empty array.
-4. Produce a "mindMap" with a single "root" topic and 3-7 "branches", each with up to 5 "children".
-5. Generate exactly ${flashcards} flashcards. Each has: clear "question", concise "answer" (1-3 sentences), teaching "explanation" (why it matters), a helpful "hint", a "memoryTrick" (mnemonic/analogy), a "example" (real-world), a "commonMistake" learners make, "difficulty" (easy|medium|hard) and up to 3 "relatedConcepts". Cover every major concept; order foundational → advanced.
-6. Generate exactly ${quiz} MCQs distributed as ${easy} easy (recall), ${medium} medium (connect two ideas), ${hard} hard (apply/infer). Exactly 4 plausible options, one correct, one-sentence "explanation" and a "misconception" describing why a student might pick a wrong option.
-7. Generate 4 "examQuestions" spread across marks 2, 5, 10, 15 with model answers scaled to the marks.
-8. Generate 4 "interviewQuestions": one beginner, two intermediate, one expert — with strong model answers.
-9. Base everything on the notes; do not invent facts unrelated to them, but DO teach, connect and add analogies/examples.
-10. Return ONLY one JSON object matching this schema, no extra text:
+1. ANALYSIS FIRST. Populate "analysis":
+   - "overview": 2-3 sentence read of what this material is really about.
+   - "hierarchy": nested tree (chapter → topic → subtopic → concept). Use only what the notes actually contain; do not invent chapters.
+   - "learningObjectives": 4-7 concrete "you will be able to ..." statements.
+   - "overallDifficulty" and "totalStudyMinutes": a realistic estimate for a motivated student.
+   - "knowledgeGraph": 6-20 nodes (each concept as a slug id + label + 1-5 importance) and edges with a short "relation" ("requires", "extends", "contrasts", "applies-to"). Prerequisites must appear as "requires" edges.
+2. Identify ${concepts} core concepts as "concepts[]". Each: 1-2 sentence "summary" (your own words), up to 4 "related", "importance" 1-5 with a one-line "importanceReason", "difficulty", realistic "studyMinutes", any "prerequisites" it needs, and a short "whyItMatters" teacher's note. Explain WHY the important ones are important (exam frequency, foundational, common interview topic, etc.).
+3. Write a 3-5 sentence "summary" that teaches the big picture.
+4. "cheatSheet" 6-12 crisp bullets; "formulaSheet" only if the material has formulas/rules, else [].
+5. "mindMap" with a single "root" and 3-7 "branches" (up to 5 "children" each).
+6. Exactly ${flashcards} flashcards with question, concise answer, teaching "explanation", "hint", "memoryTrick", real-world "example", "commonMistake", "difficulty" and up to 3 "relatedConcepts". Order foundational → advanced.
+7. Exactly ${quiz} MCQs: ${easy} easy (recall), ${medium} medium (connect two ideas), ${hard} hard (apply/infer). 4 plausible options, one correct, one-sentence "explanation", plus a "misconception".
+8. 4 "examQuestions" spread across marks 2, 5, 10, 15 with model answers scaled to the marks.
+9. 4 "interviewQuestions": one beginner, two intermediate, one expert.
+10. Ground everything in the notes. Do not fabricate facts not derivable from them.
+11. Return ONLY one JSON object matching this schema, no extra text:
 ${JSON_SCHEMA}`;
 }
 
