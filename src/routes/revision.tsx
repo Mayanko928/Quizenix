@@ -52,6 +52,57 @@ function RevisionPage() {
               </h2>
             )}
 
+            {m.analysis && (
+              <Section icon={<Gauge className="h-4 w-4" />} title="AI analysis">
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Stat icon={<Clock className="h-4 w-4" />} label="Est. study time" value={m.analysis.totalStudyMinutes ? `${m.analysis.totalStudyMinutes} min` : "—"} />
+                  <Stat icon={<Gauge className="h-4 w-4" />} label="Overall difficulty" value={m.analysis.overallDifficulty ?? "—"} />
+                  <Stat icon={<Layers className="h-4 w-4" />} label="Concepts detected" value={String(m.concepts?.length ?? m.analysis.knowledgeGraph?.nodes?.length ?? 0)} />
+                </div>
+                {m.analysis.overview && (
+                  <p className="mt-3 text-sm leading-relaxed text-foreground/90">{m.analysis.overview}</p>
+                )}
+                {m.analysis.learningObjectives?.length ? (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <Target className="h-3.5 w-3.5" /> Learning objectives
+                    </div>
+                    <ul className="space-y-1.5 text-sm">
+                      {m.analysis.learningObjectives.map((o, i) => (
+                        <li key={i} className="flex gap-2"><span className="text-primary">✓</span><span>{o}</span></li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {m.analysis.hierarchy && (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <Layers className="h-3.5 w-3.5" /> Concept hierarchy
+                    </div>
+                    <div className="rounded-xl border border-border bg-background/40 p-3 text-sm">
+                      <Hierarchy node={m.analysis.hierarchy} />
+                    </div>
+                  </div>
+                )}
+                {m.analysis.knowledgeGraph?.edges?.length ? (
+                  <div className="mt-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <Network className="h-3.5 w-3.5" /> Knowledge graph (prerequisites & links)
+                    </div>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      {m.analysis.knowledgeGraph.edges.slice(0, 30).map((e, i) => (
+                        <li key={i} className="font-mono">
+                          <span className="text-foreground">{e.from}</span>
+                          <span className="mx-1.5 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] uppercase text-primary">{e.relation ?? "→"}</span>
+                          <span className="text-foreground">{e.to}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </Section>
+            )}
+
             {m.summary && (
               <Section icon={<FileText className="h-4 w-4" />} title="One-page summary">
                 <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">{m.summary}</p>
