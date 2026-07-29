@@ -218,3 +218,52 @@ function Section({ icon, title, children }: { icon: React.ReactNode; title: stri
     </section>
   );
 }
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">{icon}{label}</div>
+      <div className="mt-1 text-lg font-semibold capitalize">{value}</div>
+    </div>
+  );
+}
+
+function Hierarchy({ node, depth = 0 }: { node: HierarchyNode; depth?: number }) {
+  return (
+    <div style={{ paddingLeft: depth * 14 }} className="py-0.5">
+      <div className="flex items-center gap-2">
+        {node.kind && (
+          <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] uppercase text-primary">{node.kind}</span>
+        )}
+        <span className={depth === 0 ? "font-semibold" : ""}>{node.name}</span>
+      </div>
+      {node.children?.map((c, i) => <Hierarchy key={i} node={c} depth={depth + 1} />)}
+    </div>
+  );
+}
+
+function ConceptCard({ c }: { c: Concept }) {
+  const stars = c.importance ?? 0;
+  return (
+    <div className="rounded-xl border border-border bg-background/40 p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="font-semibold">{c.name}</div>
+        {stars > 0 && (
+          <div className="flex shrink-0 items-center gap-0.5" title={`${stars}/5 importance`}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star key={i} className={`h-3 w-3 ${i < stars ? "fill-primary text-primary" : "text-muted-foreground/30"}`} />
+            ))}
+          </div>
+        )}
+      </div>
+      <p className="mt-1 text-sm text-muted-foreground">{c.summary}</p>
+      <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
+        {c.difficulty && <span className="rounded bg-background px-1.5 py-0.5 capitalize text-muted-foreground border border-border">{c.difficulty}</span>}
+        {c.studyMinutes ? <span className="rounded bg-background px-1.5 py-0.5 text-muted-foreground border border-border">{c.studyMinutes} min</span> : null}
+        {c.prerequisites?.length ? <span className="rounded bg-background px-1.5 py-0.5 text-muted-foreground border border-border">needs: {c.prerequisites.join(", ")}</span> : null}
+      </div>
+      {c.whyItMatters && <p className="mt-2 text-xs italic text-foreground/70">Why: {c.whyItMatters}</p>}
+      {c.importanceReason && stars >= 4 && <p className="mt-1 text-xs text-primary/80">★ {c.importanceReason}</p>}
+    </div>
+  );
+}
