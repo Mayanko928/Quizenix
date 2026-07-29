@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, BookOpen, GraduationCap, Network, ListChecks, FileText } from "lucide-react";
+import { ArrowLeft, BookOpen, GraduationCap, Network, ListChecks, FileText, Target, Clock, Layers, Gauge, Star } from "lucide-react";
 import { loadStudyMaterial } from "../lib/study-store";
-import type { StudyMaterial } from "../lib/generate.functions";
+import type { StudyMaterial, HierarchyNode, Concept } from "../lib/generate.functions";
 
 export const Route = createFileRoute("/revision")({
   head: () => ({
