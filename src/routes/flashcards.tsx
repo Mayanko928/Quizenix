@@ -19,7 +19,8 @@ import {
 import { dummyFlashcards } from "../lib/dummy-data";
 import { getFavorites, loadStudyMaterial, toggleFavorite } from "../lib/study-store";
 import type { Flashcard, FlashcardType } from "../lib/generate.functions";
-import { EXPLAIN_LENSES, explainBetter, type ExplainLens } from "../lib/explain.functions";
+import { explainBetter } from "../lib/explain.functions";
+import { EXPLAIN_LENSES, LENS_LABEL, type ExplainLens } from "../lib/explain-lenses";
 import {
   RATINGS,
   getBookmarks,
@@ -73,18 +74,6 @@ const TYPE_LABEL: Record<FlashcardType, string> = {
   "visual-thinking": "Visual thinking",
   "exam-revision": "Exam revision",
   challenge: "AI challenge",
-};
-
-const LENS_LABEL: Record<ExplainLens, string> = {
-  simpler: "Simpler",
-  detailed: "Detailed",
-  analogy: "Analogy",
-  visual: "Visual",
-  code: "Code",
-  math: "Math",
-  practical: "Practical",
-  animation: "Animation",
-  history: "History",
 };
 
 function toRichCard(f: { front: string; back: string }, i: number): Flashcard {
