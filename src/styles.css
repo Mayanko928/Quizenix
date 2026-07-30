@@ -88,3 +88,24 @@
   background-clip: text;
   color: transparent;
 }
+
+@utility glass-card {
+  background: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--card) 88%, transparent),
+    color-mix(in oklab, var(--background) 82%, transparent)
+  );
+  backdrop-filter: blur(22px) saturate(140%);
+  border: 1px solid color-mix(in oklab, var(--primary) 26%, transparent);
+}
+@utility card-flip-slow {
+  transform-style: preserve-3d;
+  transition: transform 0.72s cubic-bezier(0.22, 1.1, 0.36, 1);
+}
+@utility rise-in {
+  animation: quizenix-rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes quizenix-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

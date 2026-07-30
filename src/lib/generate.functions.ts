@@ -5,6 +5,23 @@ import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
 const Input = z.object({ notes: z.string().min(1).max(200000) });
 
+export type FlashcardType =
+  | "definition"
+  | "concept"
+  | "formula"
+  | "comparison"
+  | "true-false"
+  | "fill-blank"
+  | "diagram"
+  | "code"
+  | "application"
+  | "interview"
+  | "memory-trick"
+  | "real-world"
+  | "visual-thinking"
+  | "exam-revision"
+  | "challenge";
+
 export type Flashcard = {
   id: number;
   question: string;
@@ -16,6 +33,14 @@ export type Flashcard = {
   commonMistake?: string;
   difficulty?: "easy" | "medium" | "hard";
   relatedConcepts?: string[];
+  type?: FlashcardType;
+  topic?: string;
+  subtopic?: string;
+  learningObjective?: string;
+  recallSeconds?: number;
+  importance?: 1 | 2 | 3 | 4 | 5;
+  examProbability?: number;
+  followUp?: string;
 };
 
 export type QuizItem = {
@@ -104,7 +129,12 @@ const JSON_SCHEMA = `{
     "id": 1, "question": "string", "answer": "string",
     "explanation": "string", "hint": "string", "memoryTrick": "string",
     "example": "real-world example", "commonMistake": "string",
-    "difficulty": "easy", "relatedConcepts": ["string"]
+    "difficulty": "easy", "relatedConcepts": ["string"],
+    "type": "definition|concept|formula|comparison|true-false|fill-blank|diagram|code|application|interview|memory-trick|real-world|visual-thinking|exam-revision|challenge",
+    "topic": "string", "subtopic": "string",
+    "learningObjective": "one single objective this card tests",
+    "recallSeconds": 20, "importance": 4, "examProbability": 70,
+    "followUp": "an active-recall follow-up question for the student"
   }],
   "quiz": [{
     "id": 1, "difficulty": "easy", "question": "string",
@@ -147,7 +177,7 @@ Requirements:
 3. Write a 3-5 sentence "summary" that teaches the big picture.
 4. "cheatSheet" 6-12 crisp bullets; "formulaSheet" only if the material has formulas/rules, else [].
 5. "mindMap" with a single "root" and 3-7 "branches" (up to 5 "children" each).
-6. Exactly ${flashcards} flashcards with question, concise answer, teaching "explanation", "hint", "memoryTrick", real-world "example", "commonMistake", "difficulty" and up to 3 "relatedConcepts". Order foundational → advanced.
+6. Exactly ${flashcards} flashcards. Each card tests EXACTLY ONE "learningObjective" — never cram two ideas into one card. Pick the "type" that best fits the concept (definition, concept, formula, comparison, true-false, fill-blank, diagram, code, application, interview, memory-trick, real-world, visual-thinking, exam-revision, challenge) and vary types across the deck. Include question, concise answer, teaching "explanation", "hint", "memoryTrick", real-world "example", "commonMistake", "difficulty", up to 3 "relatedConcepts", "topic", "subtopic", "recallSeconds" (realistic thinking time, 5-90), "importance" 1-5, "examProbability" 0-100, and a "followUp" active-recall question. Order foundational → advanced.
 7. Exactly ${quiz} MCQs: ${easy} easy (recall), ${medium} medium (connect two ideas), ${hard} hard (apply/infer). 4 plausible options, one correct, one-sentence "explanation", plus a "misconception".
 8. 4 "examQuestions" spread across marks 2, 5, 10, 15 with model answers scaled to the marks.
 9. 4 "interviewQuestions": one beginner, two intermediate, one expert.
