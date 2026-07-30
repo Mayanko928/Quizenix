@@ -5,6 +5,23 @@ import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
 const Input = z.object({ notes: z.string().min(1).max(200000) });
 
+export type FlashcardType =
+  | "definition"
+  | "concept"
+  | "formula"
+  | "comparison"
+  | "true-false"
+  | "fill-blank"
+  | "diagram"
+  | "code"
+  | "application"
+  | "interview"
+  | "memory-trick"
+  | "real-world"
+  | "visual-thinking"
+  | "exam-revision"
+  | "challenge";
+
 export type Flashcard = {
   id: number;
   question: string;
@@ -16,6 +33,14 @@ export type Flashcard = {
   commonMistake?: string;
   difficulty?: "easy" | "medium" | "hard";
   relatedConcepts?: string[];
+  type?: FlashcardType;
+  topic?: string;
+  subtopic?: string;
+  learningObjective?: string;
+  recallSeconds?: number;
+  importance?: 1 | 2 | 3 | 4 | 5;
+  examProbability?: number;
+  followUp?: string;
 };
 
 export type QuizItem = {
