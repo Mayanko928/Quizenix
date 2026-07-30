@@ -129,7 +129,12 @@ const JSON_SCHEMA = `{
     "id": 1, "question": "string", "answer": "string",
     "explanation": "string", "hint": "string", "memoryTrick": "string",
     "example": "real-world example", "commonMistake": "string",
-    "difficulty": "easy", "relatedConcepts": ["string"]
+    "difficulty": "easy", "relatedConcepts": ["string"],
+    "type": "definition|concept|formula|comparison|true-false|fill-blank|diagram|code|application|interview|memory-trick|real-world|visual-thinking|exam-revision|challenge",
+    "topic": "string", "subtopic": "string",
+    "learningObjective": "one single objective this card tests",
+    "recallSeconds": 20, "importance": 4, "examProbability": 70,
+    "followUp": "an active-recall follow-up question for the student"
   }],
   "quiz": [{
     "id": 1, "difficulty": "easy", "question": "string",
