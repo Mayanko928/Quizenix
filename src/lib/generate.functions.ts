@@ -177,7 +177,7 @@ Requirements:
 3. Write a 3-5 sentence "summary" that teaches the big picture.
 4. "cheatSheet" 6-12 crisp bullets; "formulaSheet" only if the material has formulas/rules, else [].
 5. "mindMap" with a single "root" and 3-7 "branches" (up to 5 "children" each).
-6. Exactly ${flashcards} flashcards with question, concise answer, teaching "explanation", "hint", "memoryTrick", real-world "example", "commonMistake", "difficulty" and up to 3 "relatedConcepts". Order foundational → advanced.
+6. Exactly ${flashcards} flashcards. Each card tests EXACTLY ONE "learningObjective" — never cram two ideas into one card. Pick the "type" that best fits the concept (definition, concept, formula, comparison, true-false, fill-blank, diagram, code, application, interview, memory-trick, real-world, visual-thinking, exam-revision, challenge) and vary types across the deck. Include question, concise answer, teaching "explanation", "hint", "memoryTrick", real-world "example", "commonMistake", "difficulty", up to 3 "relatedConcepts", "topic", "subtopic", "recallSeconds" (realistic thinking time, 5-90), "importance" 1-5, "examProbability" 0-100, and a "followUp" active-recall question. Order foundational → advanced.
 7. Exactly ${quiz} MCQs: ${easy} easy (recall), ${medium} medium (connect two ideas), ${hard} hard (apply/infer). 4 plausible options, one correct, one-sentence "explanation", plus a "misconception".
 8. 4 "examQuestions" spread across marks 2, 5, 10, 15 with model answers scaled to the marks.
 9. 4 "interviewQuestions": one beginner, two intermediate, one expert.
