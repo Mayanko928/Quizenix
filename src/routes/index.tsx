@@ -29,13 +29,13 @@ import {
 } from "../lib/study-store";
 import { useAuth } from "../hooks/use-auth";
 import {
-import { ThemeToggle } from "@/components/theme-toggle";
   ACCEPT_ATTR,
   formatBytes,
   isAcceptedFile,
   parseFile,
   type ParseProgress,
 } from "../lib/file-parser";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/")({
   head: () => ({
