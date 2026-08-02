@@ -29,6 +29,7 @@ import {
 } from "../lib/study-store";
 import { useAuth } from "../hooks/use-auth";
 import {
+import { ThemeToggle } from "@/components/theme-toggle";
   ACCEPT_ATTR,
   formatBytes,
   isAcceptedFile,
@@ -197,7 +198,9 @@ function Landing() {
             Quizenix
           </span>
         </Link>
-        <div className="hidden items-center gap-1 sm:flex">
+        <div className="flex items-center gap-1">
+          <ThemeToggle className="mr-1" />
+          <div className="hidden items-center gap-1 sm:flex">
           <Link to="/flashcards" className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground">
             Flashcards
           </Link>
@@ -225,6 +228,7 @@ function Landing() {
               Sign in
             </Link>
           )}
+          </div>
         </div>
       </nav>
 
