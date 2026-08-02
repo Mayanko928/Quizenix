@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, BookOpen, GraduationCap, Network, ListChecks, FileText, Target, Clock, Layers, Gauge, Star } from "lucide-react";
 import { loadStudyMaterial } from "../lib/study-store";
 import type { StudyMaterial, HierarchyNode, Concept } from "../lib/generate.functions";
+import { AppNav } from "@/components/app-nav";
 
 export const Route = createFileRoute("/revision")({
   head: () => ({
@@ -23,7 +24,8 @@ function RevisionPage() {
   }, []);
 
   return (
-    <main className="dark min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground lg:pl-60 pb-24 lg:pb-0">
+      <AppNav />
       <div className="mx-auto max-w-3xl px-5 py-6">
         <header className="flex items-center justify-between">
           <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">

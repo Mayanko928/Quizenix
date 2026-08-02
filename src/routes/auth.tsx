@@ -74,7 +74,7 @@ function AuthPage() {
   };
 
   return (
-    <main className="dark grid min-h-screen place-items-center bg-background px-4 text-foreground">
+    <main className="grid min-h-screen place-items-center bg-background px-4 text-foreground">
       <div className="w-full max-w-md">
         <Link to="/" className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back

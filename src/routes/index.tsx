@@ -35,6 +35,7 @@ import {
   parseFile,
   type ParseProgress,
 } from "../lib/file-parser";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -182,7 +183,7 @@ function Landing() {
 
   return (
     <main
-      className="dark min-h-screen w-full bg-background text-foreground selection:bg-primary/30"
+      className="min-h-screen w-full bg-background text-foreground selection:bg-primary/30"
       style={{ fontFamily: "var(--font-sans)" }}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 md:px-12 lg:px-20">
@@ -197,7 +198,9 @@ function Landing() {
             Quizenix
           </span>
         </Link>
-        <div className="hidden items-center gap-1 sm:flex">
+        <div className="flex items-center gap-1">
+          <ThemeToggle className="mr-1" />
+          <div className="hidden items-center gap-1 sm:flex">
           <Link to="/flashcards" className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-card hover:text-foreground">
             Flashcards
           </Link>
@@ -225,6 +228,7 @@ function Landing() {
               Sign in
             </Link>
           )}
+          </div>
         </div>
       </nav>
 

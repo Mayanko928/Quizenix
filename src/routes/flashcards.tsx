@@ -35,6 +35,7 @@ import {
   type CardReview,
   type Rating,
 } from "../lib/srs";
+import { AppNav } from "@/components/app-nav";
 
 export const Route = createFileRoute("/flashcards")({
   head: () => ({
@@ -206,7 +207,8 @@ function FlashcardsPage() {
   if (!card) return null;
 
   return (
-    <main className="dark min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground lg:pl-60 pb-24 lg:pb-0">
+      <AppNav />
       <div
         className="pointer-events-none fixed inset-0 opacity-60"
         style={{
