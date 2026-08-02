@@ -27,6 +27,7 @@ import { saveStudyMaterial, saveNotes } from "@/lib/study-store";
 import { levelProgress, levelTitle, masteryProgress, masteryTone } from "@/lib/progress";
 import { getReviews } from "@/lib/srs";
 import { supabase } from "@/integrations/supabase/client";
+import { AppNav } from "@/components/app-nav";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -108,7 +109,8 @@ function Dashboard() {
   const missionDone = missionItems.filter((m) => m.done).length;
 
   return (
-    <main className="min-h-screen bg-background text-foreground" style={{ fontFamily: "var(--font-sans)" }}>
+    <main className="min-h-screen bg-background text-foreground lg:pl-60 pb-24 lg:pb-0" style={{ fontFamily: "var(--font-sans)" }}>
+      <AppNav />
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <Link to="/" className="flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[var(--shadow-glow)]">

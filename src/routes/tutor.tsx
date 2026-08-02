@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Send, Sparkles, Loader2 } from "lucide-react";
 import { askTutor } from "../lib/tutor.functions";
 import { loadNotes } from "../lib/study-store";
+import { AppNav } from "@/components/app-nav";
 
 export const Route = createFileRoute("/tutor")({
   head: () => ({
@@ -67,7 +68,8 @@ function TutorPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col bg-background text-foreground">
+    <main className="flex min-h-screen flex-col bg-background text-foreground lg:pl-60 pb-24 lg:pb-0">
+      <AppNav />
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-5">
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back

@@ -7,6 +7,7 @@ import { loadStudyMaterial } from "../lib/study-store";
 import type { QuizItem } from "../lib/generate.functions";
 import { recordQuizAttempts } from "../lib/study.functions";
 import { useAuth } from "../hooks/use-auth";
+import { AppNav } from "@/components/app-nav";
 
 export const Route = createFileRoute("/quiz")({
   head: () => ({
@@ -100,7 +101,8 @@ function QuizPage() {
     const pct = Math.round((score / questions.length) * 100);
     const message = pct >= 80 ? "Outstanding!" : pct >= 50 ? "Nice work!" : "Keep practicing!";
     return (
-      <main className="min-h-screen bg-background text-foreground">
+      <main className="min-h-screen bg-background text-foreground lg:pl-60 pb-24 lg:pb-0">
+      <AppNav />
         <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-5 py-10 text-center">
           <div className="grid h-20 w-20 place-items-center rounded-3xl bg-primary text-primary-foreground shadow-[var(--shadow-glow)]">
             <Trophy className="h-9 w-9" />
@@ -142,7 +144,8 @@ function QuizPage() {
   const isWrong = selected !== null && selected !== q.correctAnswerIndex;
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground lg:pl-60 pb-24 lg:pb-0">
+      <AppNav />
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-5 py-6">
         <header className="flex items-center justify-between">
           <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
