@@ -67,7 +67,7 @@ function TutorPage() {
   };
 
   return (
-    <main className="dark flex min-h-screen flex-col bg-background text-foreground">
+    <main className="flex min-h-screen flex-col bg-background text-foreground">
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-5">
         <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back

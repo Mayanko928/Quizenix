@@ -206,7 +206,7 @@ function FlashcardsPage() {
   if (!card) return null;
 
   return (
-    <main className="dark min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground">
       <div
         className="pointer-events-none fixed inset-0 opacity-60"
         style={{

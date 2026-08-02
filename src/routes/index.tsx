@@ -182,7 +182,7 @@ function Landing() {
 
   return (
     <main
-      className="dark min-h-screen w-full bg-background text-foreground selection:bg-primary/30"
+      className="min-h-screen w-full bg-background text-foreground selection:bg-primary/30"
       style={{ fontFamily: "var(--font-sans)" }}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 md:px-12 lg:px-20">

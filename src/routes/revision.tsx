@@ -23,7 +23,7 @@ function RevisionPage() {
   }, []);
 
   return (
-    <main className="dark min-h-screen bg-background text-foreground">
+    <main className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-5 py-6">
         <header className="flex items-center justify-between">
           <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
