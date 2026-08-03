@@ -7,6 +7,7 @@ import {
   Target,
   BookOpen,
   MessageCircle,
+  FileText,
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -17,7 +18,9 @@ const NAV = [
   { to: "/quiz", label: "Quiz", Icon: Target },
   { to: "/revision", label: "Revision", Icon: BookOpen },
   { to: "/tutor", label: "AI Tutor", Icon: MessageCircle },
+  { to: "/notes", label: "Notes", Icon: FileText },
 ] as const;
+
 
 /**
  * Fixed app navigation: collapsible-width sidebar on desktop, bottom bar on mobile.
