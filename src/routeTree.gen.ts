@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TutorRouteImport } from './routes/tutor'
 import { Route as RevisionRouteImport } from './routes/revision'
 import { Route as QuizRouteImport } from './routes/quiz'
 import { Route as FlashcardsRouteImport } from './routes/flashcards'
@@ -18,11 +17,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
-const TutorRoute = TutorRouteImport.update({
-  id: '/tutor',
-  path: '/tutor',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const RevisionRoute = RevisionRouteImport.update({
   id: '/revision',
   path: '/revision',
@@ -64,7 +58,6 @@ export interface FileRoutesByFullPath {
   '/flashcards': typeof FlashcardsRoute
   '/quiz': typeof QuizRoute
   '/revision': typeof RevisionRoute
-  '/tutor': typeof TutorRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesByTo {
@@ -73,7 +66,6 @@ export interface FileRoutesByTo {
   '/flashcards': typeof FlashcardsRoute
   '/quiz': typeof QuizRoute
   '/revision': typeof RevisionRoute
-  '/tutor': typeof TutorRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRoutesById {
@@ -84,7 +76,6 @@ export interface FileRoutesById {
   '/flashcards': typeof FlashcardsRoute
   '/quiz': typeof QuizRoute
   '/revision': typeof RevisionRoute
-  '/tutor': typeof TutorRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
 }
 export interface FileRouteTypes {
@@ -95,17 +86,9 @@ export interface FileRouteTypes {
     | '/flashcards'
     | '/quiz'
     | '/revision'
-    | '/tutor'
     | '/dashboard'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/flashcards'
-    | '/quiz'
-    | '/revision'
-    | '/tutor'
-    | '/dashboard'
+  to: '/' | '/auth' | '/flashcards' | '/quiz' | '/revision' | '/dashboard'
   id:
     | '__root__'
     | '/'
@@ -114,7 +97,6 @@ export interface FileRouteTypes {
     | '/flashcards'
     | '/quiz'
     | '/revision'
-    | '/tutor'
     | '/_authenticated/dashboard'
   fileRoutesById: FileRoutesById
 }
@@ -125,18 +107,10 @@ export interface RootRouteChildren {
   FlashcardsRoute: typeof FlashcardsRoute
   QuizRoute: typeof QuizRoute
   RevisionRoute: typeof RevisionRoute
-  TutorRoute: typeof TutorRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tutor': {
-      id: '/tutor'
-      path: '/tutor'
-      fullPath: '/tutor'
-      preLoaderRoute: typeof TutorRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/revision': {
       id: '/revision'
       path: '/revision'
@@ -207,7 +181,6 @@ const rootRouteChildren: RootRouteChildren = {
   FlashcardsRoute: FlashcardsRoute,
   QuizRoute: QuizRoute,
   RevisionRoute: RevisionRoute,
-  TutorRoute: TutorRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
