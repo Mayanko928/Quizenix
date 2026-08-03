@@ -19,6 +19,7 @@ import { Route as AuthenticatedTutorRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedNotesRouteImport } from './routes/_authenticated/notes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedTutorThreadIdRouteImport } from './routes/_authenticated/tutor_.$threadId'
+import { Route as AuthenticatedNotesNoteIdRouteImport } from './routes/_authenticated/notes_.$noteId'
 
 const RevisionRoute = RevisionRouteImport.update({
   id: '/revision',
@@ -70,6 +71,12 @@ const AuthenticatedTutorThreadIdRoute =
     path: '/tutor/$threadId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedNotesNoteIdRoute =
+  AuthenticatedNotesNoteIdRouteImport.update({
+    id: '/notes_/$noteId',
+    path: '/notes/$noteId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/notes/$noteId': typeof AuthenticatedNotesNoteIdRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
 }
 export interface FileRoutesByTo {
@@ -91,6 +99,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/notes': typeof AuthenticatedNotesRoute
   '/tutor': typeof AuthenticatedTutorRoute
+  '/notes/$noteId': typeof AuthenticatedNotesNoteIdRoute
   '/tutor/$threadId': typeof AuthenticatedTutorThreadIdRoute
 }
 export interface FileRoutesById {
@@ -104,6 +113,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/notes': typeof AuthenticatedNotesRoute
   '/_authenticated/tutor': typeof AuthenticatedTutorRoute
+  '/_authenticated/notes_/$noteId': typeof AuthenticatedNotesNoteIdRoute
   '/_authenticated/tutor_/$threadId': typeof AuthenticatedTutorThreadIdRoute
 }
 export interface FileRouteTypes {
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/notes'
     | '/tutor'
+    | '/notes/$noteId'
     | '/tutor/$threadId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/notes'
     | '/tutor'
+    | '/notes/$noteId'
     | '/tutor/$threadId'
   id:
     | '__root__'
@@ -140,6 +152,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/notes'
     | '/_authenticated/tutor'
+    | '/_authenticated/notes_/$noteId'
     | '/_authenticated/tutor_/$threadId'
   fileRoutesById: FileRoutesById
 }
@@ -224,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTutorThreadIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notes_/$noteId': {
+      id: '/_authenticated/notes_/$noteId'
+      path: '/notes/$noteId'
+      fullPath: '/notes/$noteId'
+      preLoaderRoute: typeof AuthenticatedNotesNoteIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -231,6 +251,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedNotesRoute: typeof AuthenticatedNotesRoute
   AuthenticatedTutorRoute: typeof AuthenticatedTutorRoute
+  AuthenticatedNotesNoteIdRoute: typeof AuthenticatedNotesNoteIdRoute
   AuthenticatedTutorThreadIdRoute: typeof AuthenticatedTutorThreadIdRoute
 }
 
@@ -238,6 +259,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedNotesRoute: AuthenticatedNotesRoute,
   AuthenticatedTutorRoute: AuthenticatedTutorRoute,
+  AuthenticatedNotesNoteIdRoute: AuthenticatedNotesNoteIdRoute,
   AuthenticatedTutorThreadIdRoute: AuthenticatedTutorThreadIdRoute,
 }
 
