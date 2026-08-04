@@ -39,7 +39,12 @@ export const askTutor = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
     const model = gateway("google/gemini-2.5-flash-lite");
 
-    const system = `You are Quizenix, an AI Study Coach focused on CONCEPTUAL MASTERY. ${modeInstruction[data.mode]} Be concise, accurate, and teach — never dump text. Use markdown-lite (bold, short bullets) sparingly.`;
+    const system = buildSystemPrompt(
+      GROUNDING_RULES_LABELLED,
+      LEARNING_PHILOSOPHY,
+      TEACHING_DEPTH,
+      `Focus on CONCEPTUAL MASTERY. ${modeInstruction[data.mode]} Be concise, accurate, and teach — never dump text. Use markdown-lite (bold, short bullets) sparingly. End with one short active-recall question that checks whether the student understood.`,
+    );
 
     const prompt = data.context
       ? `Student's study notes:\n"""\n${data.context.slice(0, 40000)}\n"""\n\nStudent's question:\n${data.question}`
