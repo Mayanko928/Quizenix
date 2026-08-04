@@ -2,6 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import {
+  buildSystemPrompt,
+  GROUNDING_RULES_LABELLED,
+  LEARNING_PHILOSOPHY,
+  TEACHING_DEPTH,
+} from "./ai-identity";
 
 const Input = z.object({
   question: z.string().min(1).max(4000),
