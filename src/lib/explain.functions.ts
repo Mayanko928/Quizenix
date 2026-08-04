@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { buildSystemPrompt, GROUNDING_RULES_LABELLED, LEARNING_PHILOSOPHY } from "./ai-identity";
 import { EXPLAIN_LENSES, LENS_INSTRUCTION } from "./explain-lenses";
 
 export const explainBetter = createServerFn({ method: "POST" })
@@ -21,7 +22,11 @@ export const explainBetter = createServerFn({ method: "POST" })
     const gateway = createLovableAiGatewayProvider(key);
     const model = gateway("google/gemini-2.5-flash-lite");
 
-    const system = `You are Quizenix, an expert AI tutor turning a flashcard into a mini-lesson. ${LENS_INSTRUCTION[data.lens]} Be accurate and concise (max ~180 words). Use plain text with short bullets; no headings, no code fences unless showing code.`;
+    const system = buildSystemPrompt(
+      GROUNDING_RULES_LABELLED,
+      LEARNING_PHILOSOPHY,
+      `You are turning a flashcard into a mini-lesson. ${LENS_INSTRUCTION[data.lens]} Be accurate and concise (max ~180 words). Use plain text with short bullets; no headings, no code fences unless showing code. If you go beyond what the card and topic state, mark it **General knowledge**.`,
+    );
 
     const prompt = `${data.topic ? `Topic: ${data.topic}\n` : ""}Flashcard question: ${data.question}\nFlashcard answer: ${data.answer}`;
 

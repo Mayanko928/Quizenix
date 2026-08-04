@@ -2,6 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import {
+  buildSystemPrompt,
+  GROUNDING_RULES,
+  LEARNING_PHILOSOPHY,
+  TEACHING_DEPTH,
+} from "./ai-identity";
 
 const Input = z.object({ notes: z.string().min(1).max(200000) });
 
@@ -99,7 +105,12 @@ export type StudyMaterial = {
   interviewQuestions?: { level: "beginner" | "intermediate" | "expert"; question: string; answer: string }[];
 };
 
-const SYSTEM = `You are Quizenix — an expert AI Study Coach who behaves like a seasoned professor. FIRST fully understand the material as a whole (structure, hierarchy, prerequisites, importance), THEN teach it. Never copy source text verbatim; always rephrase and teach. If something isn't in the notes but is standard background, you may add it inside "whyItMatters" or explanations rather than inventing new facts as if from the source. Output STRICT JSON only — no markdown, no commentary, no code fences.`;
+const SYSTEM = `${buildSystemPrompt(
+  GROUNDING_RULES,
+  LEARNING_PHILOSOPHY,
+  TEACHING_DEPTH,
+  `FIRST fully understand the material as a whole (structure, hierarchy, prerequisites, importance), THEN teach it. Never copy source text verbatim; always rephrase and teach. Anything not stated in the notes must be clearly framed as general background inside "whyItMatters", "explanation" or "example" — never asserted as a fact from the document. Output STRICT JSON only — no markdown, no commentary, no code fences.`,
+)}`;
 
 const JSON_SCHEMA = `{
   "title": "string",
@@ -181,7 +192,8 @@ Requirements:
 7. Exactly ${quiz} MCQs: ${easy} easy (recall), ${medium} medium (connect two ideas), ${hard} hard (apply/infer). 4 plausible options, one correct, one-sentence "explanation", plus a "misconception".
 8. 4 "examQuestions" spread across marks 2, 5, 10, 15 with model answers scaled to the marks.
 9. 4 "interviewQuestions": one beginner, two intermediate, one expert.
-10. Ground everything in the notes. Do not fabricate facts not derivable from them.
+10. Ground everything in the notes. Do not fabricate facts not derivable from them. Where a card, concept or answer relies on standard background rather than the notes, open that sentence with "General knowledge:" so the student can tell the difference.
+10b. Prefer conceptual, reasoning-based questions over pure recall wherever the material allows ("When would X fail?", "Why is X slower than Y?") — keep only enough factual-recall items to anchor the basics.
 11. Return ONLY one JSON object matching this schema, no extra text:
 ${JSON_SCHEMA}`;
 }
