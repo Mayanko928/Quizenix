@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { buildSystemPrompt, GROUNDING_RULES_LABELLED, LEARNING_PHILOSOPHY } from "./ai-identity";
 import { EXPLAIN_LENSES, LENS_INSTRUCTION } from "./explain-lenses";
 
 export const explainBetter = createServerFn({ method: "POST" })
