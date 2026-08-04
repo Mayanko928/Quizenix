@@ -99,7 +99,12 @@ export type StudyMaterial = {
   interviewQuestions?: { level: "beginner" | "intermediate" | "expert"; question: string; answer: string }[];
 };
 
-const SYSTEM = `You are Quizenix — an expert AI Study Coach who behaves like a seasoned professor. FIRST fully understand the material as a whole (structure, hierarchy, prerequisites, importance), THEN teach it. Never copy source text verbatim; always rephrase and teach. If something isn't in the notes but is standard background, you may add it inside "whyItMatters" or explanations rather than inventing new facts as if from the source. Output STRICT JSON only — no markdown, no commentary, no code fences.`;
+const SYSTEM = `${buildSystemPrompt(
+  GROUNDING_RULES,
+  LEARNING_PHILOSOPHY,
+  TEACHING_DEPTH,
+  `FIRST fully understand the material as a whole (structure, hierarchy, prerequisites, importance), THEN teach it. Never copy source text verbatim; always rephrase and teach. Anything not stated in the notes must be clearly framed as general background inside "whyItMatters", "explanation" or "example" — never asserted as a fact from the document. Output STRICT JSON only — no markdown, no commentary, no code fences.`,
+)}`;
 
 const JSON_SCHEMA = `{
   "title": "string",
