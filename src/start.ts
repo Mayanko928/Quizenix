@@ -1,7 +1,41 @@
 import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/react-start";
+import { setResponseHeaders } from "@tanstack/react-start/server";
 
 import { renderErrorPage } from "./lib/error-page";
 import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
+
+// Defense-in-depth HTTP headers applied to every server response.
+// CSP restricts where scripts/styles/data can come from (XSS, clickjacking,
+// data exfiltration); the rest harden MIME sniffing, referrer leakage and
+// powerful browser features we never use.
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self'",
+  // Inline styles + the theme bootstrap script are part of the app shell.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com data:",
+  "img-src 'self' data: blob: https:",
+  "worker-src 'self' blob:",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://ai.gateway.lovable.dev https://*.lovable.dev",
+  "upgrade-insecure-requests",
+].join("; ");
+
+const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
+  setResponseHeaders({
+    "content-security-policy": CSP,
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+    "strict-transport-security": "max-age=31536000; includeSubDomains",
+    "cross-origin-opener-policy": "same-origin-allow-popups",
+    "x-frame-options": "SAMEORIGIN",
+  });
+  return await next();
+});
+
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
