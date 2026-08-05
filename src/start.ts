@@ -32,7 +32,7 @@ const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => 
     "strict-transport-security": "max-age=31536000; includeSubDomains",
     "cross-origin-opener-policy": "same-origin-allow-popups",
     "x-frame-options": "SAMEORIGIN",
-  });
+  } as Record<string, string>);
   return await next();
 });
 
