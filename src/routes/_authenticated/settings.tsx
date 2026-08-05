@@ -49,7 +49,10 @@ function SettingsPage() {
     setBusy("export");
     try {
       const result = await runExport({ data: undefined });
-      const blob = new Blob([JSON.stringify(result, null, 2)], { type: "application/json" });
+      const blob = new Blob(
+        [JSON.stringify({ exportedAt: result.exportedAt, data: JSON.parse(result.json) }, null, 2)],
+        { type: "application/json" },
+      );
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

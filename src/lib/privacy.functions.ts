@@ -13,10 +13,10 @@ const USER_TABLES = ["study_sets", "notes", "chat_threads", "flashcard_reviews",
 
 export const exportMyData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ exportedAt: string; data: Record<string, unknown> }> => {
+  .handler(async ({ context }): Promise<{ exportedAt: string; json: string }> => {
     (await import("./rate-limit.server")).guard("privacy.export", 5, 60_000, {}, context.userId);
 
-    const out: Record<string, unknown> = {};
+    const out: Record<string, unknown[]> = {};
     for (const table of USER_TABLES) {
       const { data, error } = await context.supabase.from(table).select("*").limit(5000);
       if (error) throw new Error(`Could not export ${table}`);
@@ -36,7 +36,7 @@ export const exportMyData = createServerFn({ method: "POST" })
       out["chat_messages"] = [];
     }
 
-    return { exportedAt: new Date().toISOString(), data: out };
+    return { exportedAt: new Date().toISOString(), json: JSON.stringify(out) };
   });
 
 export const deleteMyData = createServerFn({ method: "POST" })
