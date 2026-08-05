@@ -1,10 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { getRequest } from "@tanstack/react-start/server";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { PROMPT_INJECTION_DEFENSE, wrapUntrusted } from "./prompt-safety";
-import { auditEvent, callerKey, enforceRateLimit } from "./rate-limit.server";
 import {
   buildSystemPrompt,
   GROUNDING_RULES,
@@ -217,8 +215,7 @@ function extractJson(text: string): unknown {
 export const generateStudyMaterial = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }): Promise<StudyMaterial> => {
-    enforceRateLimit(callerKey(getRequest()), { name: "generate", limit: 10, windowMs: 60_000 });
-    auditEvent("ai.generate", { chars: data.notes.length });
+    (await import("./rate-limit.server")).guard("ai.generate", 10, 60_000, { chars: data.notes.length });
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");

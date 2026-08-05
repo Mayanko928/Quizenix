@@ -1,10 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { getRequest } from "@tanstack/react-start/server";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { PROMPT_INJECTION_DEFENSE, wrapUntrusted } from "./prompt-safety";
-import { auditEvent, callerKey, enforceRateLimit } from "./rate-limit.server";
 import {
   buildSystemPrompt,
   GROUNDING_RULES_LABELLED,
@@ -43,8 +41,7 @@ const modeInstruction: Record<string, string> = {
 export const askTutor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }): Promise<{ answer: string }> => {
-    enforceRateLimit(callerKey(getRequest()), { name: "tutor", limit: 30, windowMs: 60_000 });
-    auditEvent("ai.tutor", { mode: data.mode });
+    (await import("./rate-limit.server")).guard("ai.tutor", 30, 60_000, { mode: data.mode });
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");

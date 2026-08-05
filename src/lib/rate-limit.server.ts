@@ -1,3 +1,5 @@
+import { getRequest } from "@tanstack/react-start/server";
+
 /**
  * Server-side abuse control for expensive endpoints (AI calls, OCR).
  *
@@ -68,4 +70,26 @@ export function auditEvent(event: string, meta: Record<string, string | number |
     Object.entries(meta).filter(([k]) => !/token|key|secret|password|email|content|text|prompt/i.test(k)),
   );
   console.info(`[audit] ${event}`, JSON.stringify(safe));
+}
+
+/**
+ * One-call guard for a server-function handler: rate limit by caller +
+ * write a PII-free audit line. Import this dynamically inside the handler so
+ * the server-only request utilities never reach the client bundle.
+ */
+export function guard(
+  name: string,
+  limit: number,
+  windowMs: number,
+  meta: Record<string, string | number | boolean> = {},
+  userId?: string,
+): void {
+  let request: Request | undefined;
+  try {
+    request = getRequest();
+  } catch {
+    request = undefined;
+  }
+  enforceRateLimit(callerKey(request, userId), { name, limit, windowMs });
+  auditEvent(name, meta);
 }

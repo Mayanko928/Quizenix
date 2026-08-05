@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { auditEvent, callerKey, enforceRateLimit } from "./rate-limit.server";
 
 const Input = z.object({
   dataUrl: z
@@ -15,8 +13,7 @@ const Input = z.object({
 export const ocrImage = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => Input.parse(d))
   .handler(async ({ data }): Promise<{ text: string }> => {
-    enforceRateLimit(callerKey(getRequest()), { name: "ocr", limit: 20, windowMs: 60_000 });
-    auditEvent("ai.ocr", { bytes: data.dataUrl.length });
+    (await import("./rate-limit.server")).guard("ai.ocr", 20, 60_000, { bytes: data.dataUrl.length });
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");

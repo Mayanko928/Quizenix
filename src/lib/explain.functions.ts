@@ -1,10 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
-import { getRequest } from "@tanstack/react-start/server";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 import { PROMPT_INJECTION_DEFENSE, wrapUntrusted } from "./prompt-safety";
-import { auditEvent, callerKey, enforceRateLimit } from "./rate-limit.server";
 import { buildSystemPrompt, GROUNDING_RULES_LABELLED, LEARNING_PHILOSOPHY } from "./ai-identity";
 import { EXPLAIN_LENSES, LENS_INSTRUCTION } from "./explain-lenses";
 
@@ -20,8 +18,7 @@ export const explainBetter = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }): Promise<{ text: string }> => {
-    enforceRateLimit(callerKey(getRequest()), { name: "explain", limit: 30, windowMs: 60_000 });
-    auditEvent("ai.explain", { lens: data.lens });
+    (await import("./rate-limit.server")).guard("ai.explain", 30, 60_000, { lens: data.lens });
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
