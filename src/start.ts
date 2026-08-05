@@ -23,16 +23,18 @@ const CSP = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+const SECURITY_HEADERS: [string, string][] = [
+  ["content-security-policy", CSP],
+  ["x-content-type-options", "nosniff"],
+  ["referrer-policy", "strict-origin-when-cross-origin"],
+  ["permissions-policy", "camera=(), microphone=(), geolocation=(), payment=(), usb=()"],
+  ["strict-transport-security", "max-age=31536000; includeSubDomains"],
+];
+
 const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
-  setResponseHeaders({
-    "content-security-policy": CSP,
-    "x-content-type-options": "nosniff",
-    "referrer-policy": "strict-origin-when-cross-origin",
-    "permissions-policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
-    "strict-transport-security": "max-age=31536000; includeSubDomains",
-    "cross-origin-opener-policy": "same-origin-allow-popups",
-    "x-frame-options": "SAMEORIGIN",
-  } as Record<string, string>);
+  for (const [name, value] of SECURITY_HEADERS) {
+    setResponseHeader(name as never, value);
+  }
   return await next();
 });
 
