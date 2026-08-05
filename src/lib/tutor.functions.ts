@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
+import { PROMPT_INJECTION_DEFENSE, wrapUntrusted } from "./prompt-safety";
 import {
   buildSystemPrompt,
   GROUNDING_RULES_LABELLED,
@@ -40,12 +41,15 @@ const modeInstruction: Record<string, string> = {
 export const askTutor = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => Input.parse(data))
   .handler(async ({ data }): Promise<{ answer: string }> => {
+    (await import("./rate-limit.server")).guard("ai.tutor", 30, 60_000, { mode: data.mode });
+
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
     const gateway = createLovableAiGatewayProvider(key);
     const model = gateway("google/gemini-2.5-flash-lite");
 
     const system = buildSystemPrompt(
+      PROMPT_INJECTION_DEFENSE,
       GROUNDING_RULES_LABELLED,
       LEARNING_PHILOSOPHY,
       TEACHING_DEPTH,
@@ -53,8 +57,8 @@ export const askTutor = createServerFn({ method: "POST" })
     );
 
     const prompt = data.context
-      ? `Student's study notes:\n"""\n${data.context.slice(0, 40000)}\n"""\n\nStudent's question:\n${data.question}`
-      : data.question;
+      ? `Student's study notes:\n${wrapUntrusted(data.context.slice(0, 40000), "study notes")}\n\nStudent's question:\n${wrapUntrusted(data.question, "student question")}`
+      : wrapUntrusted(data.question, "student question");
 
     const result = await generateText({ model, system, prompt });
     return { answer: result.text.trim() };

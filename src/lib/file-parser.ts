@@ -1,3 +1,5 @@
+import { assertSafeArchive, safeFilename, validateUpload } from "./upload-guard";
+
 // Client-side file parsing for Quizenix uploads.
 // Text extraction runs in the browser. Images and scanned PDFs are sent to
 // the server OCR endpoint (Gemini vision) as base64 data URLs.
@@ -26,7 +28,7 @@ export const ACCEPTED_EXTENSIONS = [
 ] as const;
 
 export const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(",");
-export const MAX_FILE_BYTES = 25 * 1024 * 1024; // 25 MB
+export { MAX_FILE_BYTES } from "./upload-guard";
 
 export type ParseStage =
   | "reading"
@@ -111,6 +113,14 @@ async function parseDocx(file: File): Promise<ParseResult> {
 async function parsePptx(file: File): Promise<ParseResult> {
   const JSZip = (await import("jszip")).default;
   const zip = await JSZip.loadAsync(await file.arrayBuffer());
+  // Zip-bomb guard: OOXML files are ZIP containers.
+  assertSafeArchive(
+    Object.values(zip.files).map((f) => {
+      const meta = (f as unknown as { _data?: { compressedSize?: number; uncompressedSize?: number } })._data;
+      return { compressed: meta?.compressedSize ?? 0, uncompressed: meta?.uncompressedSize ?? 0 };
+    }),
+    file.name,
+  );
   const slides = Object.keys(zip.files)
     .filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n))
     .sort();
@@ -146,7 +156,7 @@ async function parseImageWithServer(
 ): Promise<ParseResult> {
   onProgress?.({ file: file.name, stage: "ocr", message: "Running OCR on image" });
   const dataUrl = await readAsDataUrl(file);
-  const { text } = await runOcr({ dataUrl, filename: file.name });
+  const { text } = await runOcr({ dataUrl, filename: safeFilename(file.name) });
   return {
     file: file.name,
     kind: "image",
@@ -160,9 +170,8 @@ export async function parseFile(
   runOcr: (data: { dataUrl: string; filename: string }) => Promise<{ text: string }>,
   onProgress?: (p: ParseProgress) => void,
 ): Promise<ParseResult> {
-  if (file.size > MAX_FILE_BYTES) {
-    throw new Error(`${file.name} is larger than 25 MB.`);
-  }
+  // Zero trust: validate type, MIME, size and magic bytes before any parser runs.
+  await validateUpload(file);
   const ext = extOf(file.name);
   onProgress?.({ file: file.name, stage: "reading", message: "Reading file" });
   try {

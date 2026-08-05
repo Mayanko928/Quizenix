@@ -8,6 +8,7 @@ import {
   BookOpen,
   MessageCircle,
   FileText,
+  ShieldCheck,
 } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -19,6 +20,7 @@ const NAV = [
   { to: "/revision", label: "Revision", Icon: BookOpen },
   { to: "/tutor", label: "AI Tutor", Icon: MessageCircle },
   { to: "/notes", label: "Notes", Icon: FileText },
+  { to: "/settings", label: "Privacy", Icon: ShieldCheck },
 ] as const;
 
 
