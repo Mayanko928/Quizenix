@@ -113,8 +113,14 @@ function Landing() {
       navigate({ to: "/flashcards" });
       return;
     }
+    if (!user) {
+      setError("Please sign in to generate study material.");
+      navigate({ to: "/auth" });
+      return;
+    }
     setLoading(true);
     runStages();
+
     try {
       saveNotes(trimmed);
       const material = await generate({ data: { notes: trimmed } });

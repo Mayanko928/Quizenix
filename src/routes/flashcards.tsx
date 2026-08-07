@@ -156,8 +156,13 @@ function FlashcardsPage() {
   const runLens = async (l: ExplainLens) => {
     if (!card) return;
     setLens(l);
+    if (!user) {
+      setLesson("Please sign in to use AI explanations.");
+      return;
+    }
     setLoadingLens(l);
     setLesson("");
+
     try {
       const res = await explain({
         data: { question: card.question, answer: card.answer, lens: l, topic: card.topic },
