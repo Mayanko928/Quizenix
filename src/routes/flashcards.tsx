@@ -20,6 +20,7 @@ import { dummyFlashcards } from "../lib/dummy-data";
 import { getFavorites, loadStudyMaterial, toggleFavorite } from "../lib/study-store";
 import type { Flashcard, FlashcardType } from "../lib/generate.functions";
 import { explainBetter } from "../lib/explain.functions";
+import { useAuth } from "../hooks/use-auth";
 import { EXPLAIN_LENSES, LENS_LABEL, type ExplainLens } from "../lib/explain-lenses";
 import {
   RATINGS,
@@ -99,6 +100,7 @@ function FlashcardsPage() {
   const [copied, setCopied] = useState(false);
   const touchX = useRef<number | null>(null);
   const explain = useServerFn(explainBetter);
+  const { user } = useAuth();
 
   useEffect(() => {
     const m = loadStudyMaterial();
