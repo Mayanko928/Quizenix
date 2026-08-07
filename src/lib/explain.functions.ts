@@ -7,6 +7,7 @@ import { buildSystemPrompt, GROUNDING_RULES_LABELLED, LEARNING_PHILOSOPHY } from
 import { EXPLAIN_LENSES, LENS_INSTRUCTION } from "./explain-lenses";
 
 export const explainBetter = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -17,8 +18,9 @@ export const explainBetter = createServerFn({ method: "POST" })
       })
       .parse(d),
   )
-  .handler(async ({ data }): Promise<{ text: string }> => {
-    (await import("./rate-limit.server")).guard("ai.explain", 30, 60_000, { lens: data.lens });
+  .handler(async ({ data, context }): Promise<{ text: string }> => {
+    (await import("./rate-limit.server")).guard("ai.explain", 30, 60_000, { lens: data.lens }, context.userId);
+
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");

@@ -11,9 +11,17 @@ const Input = z.object({
 });
 
 export const ocrImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => Input.parse(d))
-  .handler(async ({ data }): Promise<{ text: string }> => {
-    (await import("./rate-limit.server")).guard("ai.ocr", 20, 60_000, { bytes: data.dataUrl.length });
+  .handler(async ({ data, context }): Promise<{ text: string }> => {
+    (await import("./rate-limit.server")).guard(
+      "ai.ocr",
+      20,
+      60_000,
+      { bytes: data.dataUrl.length },
+      context.userId,
+    );
+
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
