@@ -20,6 +20,7 @@ import { dummyFlashcards } from "../lib/dummy-data";
 import { getFavorites, loadStudyMaterial, toggleFavorite } from "../lib/study-store";
 import type { Flashcard, FlashcardType } from "../lib/generate.functions";
 import { explainBetter } from "../lib/explain.functions";
+import { useAuth } from "../hooks/use-auth";
 import { EXPLAIN_LENSES, LENS_LABEL, type ExplainLens } from "../lib/explain-lenses";
 import {
   RATINGS,
@@ -99,6 +100,7 @@ function FlashcardsPage() {
   const [copied, setCopied] = useState(false);
   const touchX = useRef<number | null>(null);
   const explain = useServerFn(explainBetter);
+  const { user } = useAuth();
 
   useEffect(() => {
     const m = loadStudyMaterial();
@@ -156,8 +158,13 @@ function FlashcardsPage() {
   const runLens = async (l: ExplainLens) => {
     if (!card) return;
     setLens(l);
+    if (!user) {
+      setLesson("Please sign in to use AI explanations.");
+      return;
+    }
     setLoadingLens(l);
     setLesson("");
+
     try {
       const res = await explain({
         data: { question: card.question, answer: card.answer, lens: l, topic: card.topic },

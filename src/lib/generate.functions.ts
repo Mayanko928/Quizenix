@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
@@ -213,9 +214,17 @@ function extractJson(text: string): unknown {
 }
 
 export const generateStudyMaterial = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
-  .handler(async ({ data }): Promise<StudyMaterial> => {
-    (await import("./rate-limit.server")).guard("ai.generate", 10, 60_000, { chars: data.notes.length });
+  .handler(async ({ data, context }): Promise<StudyMaterial> => {
+    (await import("./rate-limit.server")).guard(
+      "ai.generate",
+      10,
+      60_000,
+      { chars: data.notes.length },
+      context.userId,
+    );
+
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");

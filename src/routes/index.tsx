@@ -113,8 +113,14 @@ function Landing() {
       navigate({ to: "/flashcards" });
       return;
     }
+    if (!user) {
+      setError("Please sign in to generate study material.");
+      navigate({ to: "/auth" });
+      return;
+    }
     setLoading(true);
     runStages();
+
     try {
       saveNotes(trimmed);
       const material = await generate({ data: { notes: trimmed } });
@@ -163,7 +169,14 @@ function Landing() {
     let combined = "";
     for (const file of accepted) {
       try {
-        const result = await parseFile(file, (d) => ocr({ data: d }), onProgress);
+        const result = await parseFile(
+          file,
+          (d) => {
+            if (!user) throw new Error("Please sign in to extract text from images.");
+            return ocr({ data: d });
+          },
+          onProgress,
+        );
         if (result.text) combined += (combined ? "\n\n" : "") + `# ${file.name}\n${result.text}`;
         updateFile(file.name, {
           status: result.text ? "done" : "error",

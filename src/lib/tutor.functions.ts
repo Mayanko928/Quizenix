@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
@@ -39,9 +40,11 @@ const modeInstruction: Record<string, string> = {
 };
 
 export const askTutor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
-  .handler(async ({ data }): Promise<{ answer: string }> => {
-    (await import("./rate-limit.server")).guard("ai.tutor", 30, 60_000, { mode: data.mode });
+  .handler(async ({ data, context }): Promise<{ answer: string }> => {
+    (await import("./rate-limit.server")).guard("ai.tutor", 30, 60_000, { mode: data.mode }, context.userId);
+
 
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
